@@ -80,6 +80,7 @@ def press_the_notification_button(_step, name):
         world.browser.execute_script("$('{}').click()".format(css))
     else:
         world.css_click(css, success_condition=button_clicked), '%s button not clicked after 5 attempts.' % name
+    world.wait_for_ajax_complete()
 
 
 @step('I change the "(.*)" field to "(.*)"$')
@@ -159,6 +160,7 @@ def log_into_studio(
 
     assert uname in world.css_text('h2.title', max_attempts=15)
 
+
 def create_a_course():
     course = world.CourseFactory.create(org='MITx', course='999', display_name='Robot Super Course')
     world.scenario_dict['COURSE'] = course
@@ -229,7 +231,9 @@ def open_new_unit(step):
     step.given('I have opened a new course section in Studio')
     step.given('I have added a new subsection')
     step.given('I expand the first section')
+    old_url = world.browser.url
     world.css_click('a.new-unit-item')
+    world.wait_for(lambda x: world.browser.url != old_url)
 
 
 @step('the save notification button is disabled')
@@ -268,6 +272,7 @@ def type_in_codemirror(index, text):
     g._element.send_keys(text)
     if world.is_firefox():
         world.trigger_event('div.CodeMirror', index=index, event='blur')
+    world.wait_for_ajax_complete()
 
 
 def upload_file(filename):

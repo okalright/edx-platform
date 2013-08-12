@@ -17,6 +17,11 @@ def i_select_advanced_settings(step):
     world.click_course_settings()
     link_css = 'li.nav-course-settings-advanced a'
     world.css_click(link_css)
+    world.wait_for_requirejs(
+        ["jquery", "js/models/course", "js/models/settings/advanced",
+         "js/views/settings/advanced", "codemirror"])
+    # this shouldn't be necessary, but we experience sporadic failures otherwise
+    world.wait(1)
 
 
 @step('I am on the Advanced Course Settings page in Studio$')
@@ -93,7 +98,7 @@ def assert_policy_entries(expected_keys, expected_values):
     for key, value in zip(expected_keys, expected_values):
         index = get_index_of(key)
         assert_false(index == -1, "Could not find key: {key}".format(key=key))
-        assert_equal(value, world.css_find(VALUE_CSS)[index].value, "value is incorrect")
+        assert_equal(value, world.css_find(VALUE_CSS)[index].value)
 
 
 def get_index_of(expected_key):
@@ -117,4 +122,6 @@ def change_display_name_value(step, new_value):
 
 def change_value(step, key, new_value):
     type_in_codemirror(get_index_of(key), new_value)
+    world.wait(0.5)
     press_the_notification_button(step, "Save")
+    world.wait_for_ajax_complete()

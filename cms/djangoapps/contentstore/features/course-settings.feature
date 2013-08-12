@@ -8,7 +8,8 @@ Feature: Course Settings
     When I select Schedule and Details
     And I set course dates
     And I press the "Save" notification button
-    Then I see the set dates on refresh
+    And I reload the page
+    Then I see the set dates
 
     # IE has trouble with saving information
     @skip_internetexplorer
@@ -16,7 +17,8 @@ Feature: Course Settings
     Given I have set course dates
     And I clear all the dates except start
     And I press the "Save" notification button
-    Then I see cleared dates on refresh
+    And I reload the page
+    Then I see cleared dates
 
     # IE has trouble with saving information
     @skip_internetexplorer
@@ -25,7 +27,8 @@ Feature: Course Settings
     And I press the "Save" notification button
     And I clear the course start date
     Then I receive a warning about course start date
-    And The previously set start date is shown on refresh
+    And I reload the page
+    And The previously set start date is shown
 
     # IE has trouble with saving information
     # Safari gets CSRF token errors
@@ -36,7 +39,8 @@ Feature: Course Settings
     And I have entered a new course start date
     And I press the "Save" notification button
     Then The warning about course start date goes away
-    And My new course start date is shown on refresh
+    And I reload the page
+    Then my new course start date is shown
 
   # Safari does not save + refresh properly through sauce labs
   @skip_safari
@@ -44,7 +48,8 @@ Feature: Course Settings
     Given I have set course dates
     And I press the "Save" notification button
     When I change fields
-    Then I do not see the new changes persisted on refresh
+    And I reload the page
+    Then I do not see the changes
 
   # Safari does not save + refresh properly through sauce labs
   @skip_safari

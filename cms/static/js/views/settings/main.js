@@ -1,6 +1,7 @@
-if (!CMS.Views['Settings']) CMS.Views.Settings = {};
+define(["js/views/validation", "codemirror", "underscore", "jquery", "jquery.ui", "js/models/uploads", "js/views/uploads", "jquery.timepicker", "date"],
+    function(ValidatingView, CodeMirror, _, $, ui, FileUploadModel, FileUploadDialog) {
 
-CMS.Views.Settings.Details = CMS.Views.ValidatingView.extend({
+var DetailsView = ValidatingView.extend({
     // Model class is CMS.Models.Settings.CourseDetails
     events : {
         "input input" : "updateModel",
@@ -244,33 +245,36 @@ CMS.Views.Settings.Details = CMS.Views.ValidatingView.extend({
     showNotificationBar: function() {
         // We always call showNotificationBar with the same args, just
         // delegate to superclass
-        CMS.Views.ValidatingView.prototype.showNotificationBar.call(this,
-                                                                    this.save_message,
-                                                                    _.bind(this.saveView, this),
-                                                                    _.bind(this.revertView, this));
+        ValidatingView.prototype.showNotificationBar.call(this,
+                                                          this.save_message,
+                                                          _.bind(this.saveView, this),
+                                                          _.bind(this.revertView, this));
     },
 
     uploadImage: function(event) {
         event.preventDefault();
-        var upload = new CMS.Models.FileUpload({
+        var upload = new FileUploadModel({
             title: gettext("Upload your course image."),
             message: gettext("Files must be in JPEG or PNG format."),
             mimeTypes: ['image/jpeg', 'image/png']
         });
         var self = this;
-        var modal = new CMS.Views.UploadDialog({
+        var modal = new FileUploadDialog({
             model: upload,
             onSuccess: function(response) {
                 var options = {
                     'course_image_name': response.displayname,
                     'course_image_asset_path': response.url
-                }
+                };
                 self.model.set(options);
                 self.render();
-                $('#course-image').attr('src', self.model.get('course_image_asset_path'))
+                $('#course-image').attr('src', self.model.get('course_image_asset_path'));
             }
         });
         $('.wrapper-view').after(modal.show().el);
     }
 });
 
+return DetailsView;
+
+}); // end define()

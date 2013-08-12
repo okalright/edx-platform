@@ -28,19 +28,13 @@ prepend_path: cms/static
 
 # Paths to library JavaScript files (optional)
 lib_paths:
+    - setup_require.js
+    - xmodule_js/common_static/js/vendor/require.js
     - xmodule_js/common_static/coffee/src/ajax_prefix.js
-    - xmodule_js/common_static/coffee/src/logger.js
-    - xmodule_js/common_static/js/vendor/RequireJS.js
-    - xmodule_js/common_static/js/vendor/json2.js
+    - xmodule_js/common_static/js/src/utility.js
     - xmodule_js/common_static/js/vendor/jquery.min.js
     - xmodule_js/common_static/js/vendor/jquery-ui.min.js
     - xmodule_js/common_static/js/vendor/jquery.cookie.js
-    - xmodule_js/common_static/js/vendor/jquery.qtip.min.js
-    - xmodule_js/common_static/js/vendor/swfobject/swfobject.js
-    - xmodule_js/common_static/js/vendor/jquery.ba-bbq.min.js
-    - xmodule_js/common_static/js/vendor/annotator.min.js
-    - xmodule_js/common_static/js/vendor/annotator.store.min.js
-    - xmodule_js/common_static/js/vendor/annotator.tags.min.js
     - xmodule_js/common_static/js/vendor/underscore-min.js
     - xmodule_js/common_static/js/vendor/underscore.string.min.js
     - xmodule_js/common_static/js/vendor/backbone-min.js
@@ -48,14 +42,13 @@ lib_paths:
     - xmodule_js/common_static/js/vendor/timepicker/jquery.timepicker.js
     - xmodule_js/common_static/js/vendor/jquery.leanModal.min.js
     - xmodule_js/common_static/js/vendor/jquery.form.js
+    - xmodule_js/common_static/js/vendor/html5-input-polyfills/number-polyfill.js
     - xmodule_js/common_static/js/vendor/sinon-1.7.1.js
     - xmodule_js/common_static/js/vendor/jasmine-jquery.js
     - xmodule_js/common_static/js/vendor/jasmine-stealth.js
     - xmodule_js/common_static/js/vendor/CodeMirror/codemirror.js
     - xmodule_js/src/xmodule.js
-    - xmodule_js/src
-    - xmodule_js/common_static/js/test/add_ajax_prefix.js
-    - xmodule_js/common_static/js/src/utility.js
+    - xmodule_js/common_static/js/test/i18n.js
 
 # Paths to source JavaScript files
 src_paths:
@@ -83,10 +76,15 @@ fixture_paths:
 # appearing in the test runner page.
 # Files are included by default, which means that they
 # are loaded using a <script> tag in the test runner page.
-# When loading many files, this can be slow, so 
+# When loading many files, this can be slow, so
 # exclude any files you don't need.
 #exclude_from_page:
 #    - path/to/lib/exclude/*
+exclude_from_page:
+    - coffee/src/*
+    - js/*
+    - xmodule_js/common_static/*
+    - xmodule_js/src/xmodule.js
 
 # Regular expression used to guarantee that a *.js file
 # is included in the test runner page.
@@ -94,5 +92,8 @@ fixture_paths:
 # `include_in_page`, the file WILL be included.
 # You can use this to exclude all files in a directory,
 # but make an exception for particular files.
-#include_in_page:
-#    - path/to/lib/exclude/exception_*.js
+include_in_page:
+    - xmodule_js/common_static/js/vendor/require.js
+    - xmodule_js/common_static/js/vendor/jasmine-jquery.js
+    - xmodule_js/common_static/js/vendor/jasmine-stealth.js
+    - xmodule_js/common_static/coffee/src/ajax_prefix.js
