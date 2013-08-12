@@ -102,6 +102,7 @@ urlpatterns = ('',  # nopep8
     # noop to squelch ajax errors
     url(r'^event$', 'contentstore.views.event', name='event'),
 
+    url(r'^xmodule/', include('pipeline_js.urls')),
     url(r'^heartbeat$', include('heartbeat.urls')),
 )
 

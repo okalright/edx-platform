@@ -87,7 +87,8 @@ MAKO_TEMPLATES = {}
 MAKO_TEMPLATES['main'] = [
     PROJECT_ROOT / 'templates',
     COMMON_ROOT / 'templates',
-    COMMON_ROOT / 'djangoapps' / 'pipeline_mako' / 'templates'
+    COMMON_ROOT / 'djangoapps' / 'pipeline_mako' / 'templates',
+    COMMON_ROOT / 'djangoapps' / 'pipeline_js' / 'templates',
 ]
 
 for namespace, template_dirs in lms.envs.common.MAKO_TEMPLATES.iteritems():
