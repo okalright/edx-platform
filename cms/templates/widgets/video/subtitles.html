@@ -1,5 +1,120 @@
+<%! from django.utils.translation import ugettext as _ %>
+<%namespace name='static' file='../../static_content.html'/>
+<%page args="tabName"/>
+
+<%
+  import hashlib
+  import copy
+  import json
+  hlskey = hashlib.md5(module.location.url()).hexdigest()
+%>
+
+## js templates
+
+<script id="transcripts-metadata-list-entry" type="text/template">
+    <%static:include path="js/transcripts/metadata-list-entry.underscore" />
+</script>
+
+<!--
+<div class="wrapper-comp-settings basic_metadata_edit" data-metadata='{
+   "display_name":{
+      "default_value":"Video",
+      "explicitly_set":false,
+      "display_name":"Display Name",
+      "help":"Display name for this module.",
+      "inheritable":false,
+      "type":"String",
+      "field_name":"display_name",
+      "options":[
+
+      ],
+      "value":"Video"
+   },
+   "html5_sources":{
+      "default_value":[
+
+      ],
+      "explicitly_set":false,
+      "display_name":"Video Sources",
+      "help":"A list of filenames to be used with HTML5 video. The first supported filetype will be displayed.",
+      "inheritable":false,
+      "type":"List",
+      "field_name":"html5_sources",
+      "options":[
+
+      ],
+      "value":[
+
+      ]
+   }
+}'></div> -->
+
+
+<% metadata_fields = copy.deepcopy(editable_metadata_fields) %>
+<%
+    display_name = metadata_fields['display_name']
+    video_url = metadata_fields['html5_sources']
+    youtube_id_1_0 = metadata_fields['youtube_id_1_0']
+
+    video_url.update({
+        'help': 'To be sure all students can view the video, we recommend providing alternate versions of the same video: mp4, webm and youtube (if available).',
+        'display_name': 'Video URL',
+        'field_name': 'video_url'
+    })
+
+    video_url['value'].append(youtube_id_1_0['value'])
+
+    metadata = {
+        'display_name': display_name,
+        'video_url': video_url
+    }
+ %>
+
+<div class="wrapper-comp-settings basic_metadata_edit" data-metadata='${json.dumps(metadata) | h}'></div>
+
+
 <script type="text/javascript">
-    (function(){
-        new Subtitles();
-    }());
+    $(document).ready(function(){
+        var transcripts = new Transcripts({
+                el: $('.component-editor').find('.basic_metadata_edit')
+            });
+
+        function sync (from, to) {
+            from.each(function(m) {
+                var model = to.findWhere({
+                        field_name: m.getFieldName()
+                    });
+
+                if (model) {
+                    model.setValue(m.getValue());
+                }
+            });
+        }
+
+        TabsEditingDescriptor.Model.addModelUpdate(
+            '${html_id}',
+            '${tabName}',
+            function () {
+                // Advanced, Save
+                metadataEditor = TabsEditingDescriptor.getMetadataEditor();
+
+                if (metadataEditor) {
+                    sync(transcripts.collection, metadataEditor.collection);
+                }
+            }
+        );
+
+        TabsEditingDescriptor.Model.addOnSwitch(
+            '${html_id}',
+            '${tabName}',
+            function () {
+                // Basic
+                metadataEditor = TabsEditingDescriptor.getMetadataEditor();
+
+                if (metadataEditor) {
+                    sync(metadataEditor.collection, transcripts.collection);
+                }
+            }
+        );
+    });
 </script>
