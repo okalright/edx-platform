@@ -1,16 +1,25 @@
 #pylint: disable=E1103, E1101
 
-from django.conf import settings
-from xmodule.modulestore import Location
-from xmodule.modulestore.django import modulestore
-from xmodule.modulestore.exceptions import ItemNotFoundError
-from xmodule.contentstore.content import StaticContent
-from django.core.urlresolvers import reverse
+from __future__ import division
+
 import copy
 import logging
 import re
-from xmodule.modulestore.draft import DIRECT_ONLY_CATEGORIES
+import json
+import HTMLParser
+from lxml import etree
+
+import requests
+
+from django.conf import settings
 from django.utils.translation import ugettext as _
+from cache_toolbox.core import del_cached_content
+from xmodule.contentstore.content import StaticContent
+from xmodule.contentstore.django import contentstore
+from xmodule.modulestore import Location
+from xmodule.modulestore.django import modulestore
+from xmodule.modulestore.exceptions import ItemNotFoundError
+from xmodule.modulestore.draft import DIRECT_ONLY_CATEGORIES
 
 log = logging.getLogger(__name__)
 
@@ -235,3 +244,140 @@ def remove_extra_panel_tab(tab_type, course):
         course_tabs = [ct for ct in course_tabs if ct != tab_panel]
         changed = True
     return changed, course_tabs
+
+
+def generate_subs(speed, source_speed, source_subs):
+    """Generate and return subtitles dictionary for speed equal to
+    `speed` value, using `source_speed` and `source_subs`."""
+    if speed == source_speed:
+        return source_subs
+
+    coefficient = speed / source_speed
+    subs = {
+        'start': [
+            int(round(timestamp * coefficient)) for
+            timestamp in source_subs['start']
+        ],
+        'end': [
+            int(round(timestamp * coefficient)) for
+            timestamp in source_subs['end']
+        ],
+        'text': source_subs['text']}
+    return subs
+
+
+def save_subs_to_store(subs, subs_id, item):
+    """Save subtitles into `StaticContent`."""
+    filedata = json.dumps(subs, indent=2)
+    mime_type = 'application/json'
+    filename = 'subs_{0}.srt.sjson'.format(subs_id)
+
+    content_location = StaticContent.compute_location(
+        item.location.org, item.location.course, filename)
+    content = StaticContent(content_location, filename, mime_type, filedata)
+    contentstore().save(content)
+    del_cached_content(content_location)
+    return content_location
+
+
+def download_youtube_subs(youtube_subs, item):
+    """Download subtitles from Youtube using `youtube_ids`, and
+    save them to assets for `item` module."""
+    html_parser = HTMLParser.HTMLParser()
+    status_dict = {}
+
+    # Iterate from lowest to highest speed and try to do download subtitles
+    # from the Youtube service.
+    for speed, youtube_id in sorted(youtube_subs.iteritems()):
+        if not youtube_id:
+            continue
+
+        data = requests.get(
+            "http://video.google.com/timedtext",
+            params={'lang': 'en', 'v': youtube_id})
+
+        if data.status_code != 200 or not data.text:
+            status_dict.update({speed: False})
+            log.error("Can't recieved correct subtitles from Youtube.")
+            continue
+
+        sub_starts = []
+        sub_ends = []
+        sub_texts = []
+
+        xmltree = etree.fromstring(str(data.text))
+        for element in xmltree:
+            if element.tag == "text":
+                start = float(element.get("start"))
+                duration = float(element.get("dur"))
+                text = element.text
+                end = start + duration
+
+                if text:
+                    # Start and end are an int representing the
+                    # millisecond timestamp.
+                    sub_starts.append(int(start * 1000))
+                    sub_ends.append(int((end + 0.0001) * 1000))
+                    sub_texts.append(
+                        html_parser.unescape(text.replace('\n', ' ')))
+
+        available_speed = speed
+        subs = {
+            'start': sub_starts,
+            'end': sub_ends,
+            'text': sub_texts}
+
+        save_subs_to_store(subs, youtube_id, item)
+
+        log.info(
+            """Subtitles for Youtube ID {0} (speed {1})
+            are downloaded from Youtube and
+            saved.""".format(youtube_id, speed)
+        )
+
+        status_dict.update({speed: True})
+
+    if not any(status_dict.itervalues()):
+        log.error("Can't find any subtitles on the Youtube service.")
+        return False
+
+    # When we exit from the previous loop, `available_speed` and `subs`
+    # are the subtitles data with the highest speed available on the
+    # Youtube service. We use the highest speed as main speed for the
+    # generation other subtitles, cause during calculation timestamps
+    # for lower speeds we just use multiplication istead of division.
+
+    # Generate subtitles for missed speeds.
+    for speed, status in status_dict.iteritems():
+        if not status:
+            save_subs_to_store(
+                generate_subs(speed, available_speed, subs),
+                youtube_subs[speed],
+                item)
+
+            log.info(
+                """Subtitles for Youtube ID {0} (speed {1})
+                are generated from Youtube ID {2} (speed {3}) and
+                saved.""".format(
+                youtube_subs[speed],
+                speed,
+                youtube_subs[available_speed],
+                available_speed)
+            )
+
+    return True
+
+
+def manage_video_subtitles(item):
+    """Function for managing subtitles."""
+
+    youtube_subs = {
+        0.75: item.youtube_id_0_75,
+        1: item.youtube_id_1_0,
+        1.25: item.youtube_id_1_25,
+        1.5: item.youtube_id_1_5
+    }
+
+    status = download_youtube_subs(youtube_subs, item)
+
+    return status
