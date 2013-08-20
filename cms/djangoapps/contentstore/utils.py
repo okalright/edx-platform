@@ -7,12 +7,16 @@ import logging
 import re
 import json
 import HTMLParser
+from functools import wraps
 from lxml import etree
 
 import requests
+from pysrt import SubRipFile
 
 from django.conf import settings
 from django.utils.translation import ugettext as _
+from django_comment_client.utils import JsonResponse
+
 from cache_toolbox.core import del_cached_content
 from xmodule.contentstore.content import StaticContent
 from xmodule.contentstore.django import contentstore
@@ -246,6 +250,26 @@ def remove_extra_panel_tab(tab_type, course):
     return changed, course_tabs
 
 
+def return_ajax_status(view_function):
+    """Except, that view function return True/False, and convert
+    response to JSON HTTP response:
+        {"success": true} or {"success": false}
+    """
+    @wraps(view_function)
+    def new_view_function(request, *args, **kwargs):
+        """New view functions for decorator result."""
+        result = view_function(request, *args, **kwargs)
+        if isinstance(result, tuple):
+            status = result[0]
+            response_data = result[1]
+        else:
+            status = result
+            response_data = {}
+        response_data.update({'success': status})
+        return JsonResponse(response_data)
+    return new_view_function
+
+
 def generate_subs(speed, source_speed, source_subs):
     """Generate and return subtitles dictionary for speed equal to
     `speed` value, using `source_speed` and `source_subs`."""
@@ -381,3 +405,48 @@ def manage_video_subtitles(item):
     status = download_youtube_subs(youtube_subs, item)
 
     return status
+
+
+def generate_subs_from_source(speed_subs, subs_type, subs_filedata, item):
+    """Generate subtitles from source files (like SubRip format, etc.)
+    and save them to assets for `item` module.
+    We expect, that speed of source subs equal to 1
+
+    :param speed_subs: dictionary {speed: sub_id, ...}
+    :param subs_type: type of source subs: "srt", ...
+    :param subs_filedata: content of source subs.
+    :param item: module object.
+    :returns: True, if all subs are generated and saved successfully.
+    """
+    html_parser = HTMLParser.HTMLParser()
+
+    if subs_type != 'srt':
+        log.error("We support only SubRip (*.srt) subtitles format.")
+        return False
+
+    srt_subs_obj = SubRipFile.from_string(subs_filedata)
+    if not srt_subs_obj:
+        log.error("Something wrong with SubRip subtitles file during parsing.")
+        return False
+
+    sub_starts = []
+    sub_ends = []
+    sub_texts = []
+
+    for sub in srt_subs_obj:
+        sub_starts.append(sub.start.ordinal)
+        sub_ends.append(sub.end.ordinal)
+        sub_texts.append(html_parser.unescape(sub.text.replace('\n', ' ')))
+
+    subs = {
+        'start': sub_starts,
+        'end': sub_ends,
+        'text': sub_texts}
+
+    for speed, subs_id in speed_subs.iteritems():
+        save_subs_to_store(
+            generate_subs(speed, 1, subs),
+            subs_id,
+            item)
+
+    return True

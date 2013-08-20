@@ -1,12 +1,14 @@
 """Views for items (modules)."""
 
+import os
+import logging
 from uuid import uuid4
 
-import logging
 
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseBadRequest
+from django.template.defaultfilters import slugify
 
 from xmodule.modulestore import Location
 from xmodule.modulestore.django import modulestore
@@ -14,12 +16,13 @@ from xmodule.modulestore.inheritance import own_metadata
 from xmodule.modulestore.exceptions import ItemNotFoundError, InvalidLocationError
 
 from util.json_request import expect_json, JsonResponse
-from ..utils import get_modulestore, manage_video_subtitles
+from ..utils import (get_modulestore, manage_video_subtitles,
+                     return_ajax_status, generate_subs_from_source)
 from .access import has_access
 from .requests import _xmodule_recurse
 from xmodule.x_module import XModuleDescriptor
 
-__all__ = ['save_item', 'create_item', 'delete_item']
+__all__ = ['save_item', 'create_item', 'delete_item', 'upload_subtitles']
 
 log = logging.getLogger(__name__)
 
@@ -197,3 +200,80 @@ def delete_item(request):
                 modulestore('direct').update_children(parent.location, parent.children)
 
     return JsonResponse()
+
+
+@login_required
+@return_ajax_status
+def upload_subtitles(request):
+    """Try to upload subtitles for current module."""
+
+    # This view return True/False, cause we use `return_ajax_status`
+    # view decorator.
+    item_location = request.POST.get('id')
+    if not item_location:
+        log.error('POST data without "id" form data.')
+        return False
+
+    if 'file' not in request.FILES:
+        log.error('POST data without "file" form data.')
+        return False
+
+    source_subs_filedata = request.FILES['file'].read()
+    source_subs_filename = request.FILES['file'].name
+
+    if '.' not in source_subs_filename:
+        log.error("Undefined file extension.")
+        return False
+
+    basename = os.path.basename(source_subs_filename)
+    source_subs_name = os.path.splitext(basename)[0]
+    source_subs_ext = os.path.splitext(basename)[1][1:]
+
+    try:
+        item = modulestore().get_item(item_location)
+    except (ItemNotFoundError, InvalidLocationError):
+        log.error("Can't find item by location.")
+        return False
+
+    # Check permissions for this user within this course.
+    if not has_access(request.user, item_location):
+        raise PermissionDenied()
+
+    if item.category != 'video':
+        log.error('Subtitles are supported only for "video" modules.')
+        return False
+
+    speed_subs = {
+        0.75: item.youtube_id_0_75,
+        1: item.youtube_id_1_0,
+        1.25: item.youtube_id_1_25,
+        1.5: item.youtube_id_1_5
+    }
+
+    if any(speed_subs.values()):
+        status = generate_subs_from_source(
+            speed_subs,
+            source_subs_ext,
+            source_subs_filedata,
+            item)
+
+    elif any(item.html5_sources):
+        sub_attr = slugify(source_subs_name)
+
+        # Generate only one subs for speed = 1.0
+        status = generate_subs_from_source(
+            {1: sub_attr},
+            source_subs_ext,
+            source_subs_filedata,
+            item)
+
+        if status:
+            item.sub = sub_attr
+            item.save()
+            store = get_modulestore(Location(item_location))
+            store.update_metadata(item_location, own_metadata(item))
+    else:
+        log.error('Empty video sources.')
+        return False
+
+    return status
