@@ -4,11 +4,15 @@ from django.core.urlresolvers import reverse
 from xmodule.capa_module import CapaDescriptor
 import json
 from xmodule.modulestore.django import modulestore
+from xmodule.contentstore.django import contentstore
+from xmodule.contentstore.content import StaticContent
+from xmodule.exceptions import NotFoundError
 import datetime
 from pytz import UTC
 
 
 class DeleteItem(CourseTestCase):
+    """Tests for '/delete_item' url."""
     def setUp(self):
         """ Creates the test course with a static page in it. """
         super(DeleteItem, self).setUp()
@@ -248,3 +252,100 @@ class TestEditItem(CourseTestCase):
         sequential = modulestore().get_item(self.seq_location)
         self.assertEqual(sequential.due, datetime.datetime(2010, 11, 22, 4, 0, tzinfo=UTC))
         self.assertEqual(sequential.start, datetime.datetime(2010, 9, 12, 14, 0, tzinfo=UTC))
+
+
+class BaseSubtitles(CourseTestCase):
+    """Base test class for subtitles tests."""
+
+    org = 'MITx'
+    number = '999'
+
+    def clear_subs_content(self):
+        """Remove, if subtitles content exists."""
+        for youtube_id in self.get_youtube_ids().values():
+            filename = 'subs_{0}.srt.sjson'.format(youtube_id)
+            content_location = StaticContent.compute_location(
+                self.org, self.number, filename)
+            try:
+                content = contentstore().find(content_location)
+                contentstore().delete(content.get_id())
+            except NotFoundError:
+                pass
+
+    def setUp(self):
+        """Create initial data."""
+        super(BaseSubtitles, self).setUp()
+
+        # Add video module
+        data = {
+            'parent_location': str(self.course_location),
+            'category': 'video',
+            'type': 'video'
+        }
+        resp = self.client.post(reverse('create_item'), data)
+        self.item_location = json.loads(resp.content).get('id')
+        self.assertEqual(resp.status_code, 200)
+
+        # hI10vDNYz4M - valid Youtube ID with subtitles.
+        # JMD_ifUUfsU, AKqURZnYqpk, DYpADpL7jAY - valid Youtube IDs
+        # without subtitles.
+        data = '<video youtube="0.75:JMD_ifUUfsU,1.0:hI10vDNYz4M,1.25:AKqURZnYqpk,1.50:DYpADpL7jAY" />'
+        modulestore().update_item(self.item_location, data)
+
+        self.item = modulestore().get_item(self.item_location)
+
+        # Remove all subtitles for current module.
+        self.clear_subs_content()
+
+    def get_youtube_ids(self):
+        """Return youtube speeds and ids."""
+        item = modulestore().get_item(self.item_location)
+
+        return {
+            0.75: item.youtube_id_0_75,
+            1: item.youtube_id_1_0,
+            1.25: item.youtube_id_1_25,
+            1.5: item.youtube_id_1_5
+        }
+
+
+class ImportSubtitlesFromYoutube(BaseSubtitles):
+    """Tests for saving video item."""
+
+    def test_success_video_module_subs_importing(self):
+        # Import subtitles.
+        resp = self.client.post(
+            reverse('save_item'), {'id': self.item_location, 'metadata': {}})
+
+        self.assertEqual(resp.status_code, 204)
+
+        # Check assets status after importing subtitles.
+        for youtube_id in self.get_youtube_ids().values():
+            filename = 'subs_{0}.srt.sjson'.format(youtube_id)
+            content_location = StaticContent.compute_location(
+                self.org, self.number, filename)
+            self.assertTrue(contentstore().find(content_location))
+
+    def test_fail_youtube_ids_unavailable(self):
+        data = '<video youtube="0.75:BAD_YOUTUBE_ID1,1:BAD_YOUTUBE_ID2,1.25:BAD_YOUTUBE_ID3,1.5:BAD_YOUTUBE_ID4" />'
+        modulestore().update_item(self.item_location, data)
+
+        # Import subtitles.
+        resp = self.client.post(
+            reverse('save_item'), {'id': self.item_location, 'metadata': {}})
+
+        self.assertEqual(resp.status_code, 204)
+
+        for youtube_id in self.get_youtube_ids().values():
+            filename = 'subs_{0}.srt.sjson'.format(youtube_id)
+            content_location = StaticContent.compute_location(
+                self.org, self.number, filename)
+            self.assertRaises(
+                NotFoundError, contentstore().find, content_location)
+
+    def tearDown(self):
+        super(ImportSubtitlesFromYoutube, self).tearDown()
+
+        # Remove all subtitles for current module.
+        self.clear_subs_content()
+
