@@ -4,6 +4,7 @@ import mock
 import unittest
 import collections
 import copy
+import json
 from uuid import uuid4
 
 from django.test import TestCase
@@ -11,7 +12,6 @@ from xmodule.modulestore.tests.factories import CourseFactory
 from django.test.utils import override_settings
 from xmodule.modulestore.tests.factories import CourseFactory
 
-from contentstore.tests.test_course_settings import CourseTestCase
 from xmodule.contentstore.content import StaticContent
 from xmodule.contentstore.django import contentstore
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
@@ -173,6 +173,34 @@ class CourseImageTestCase(TestCase):
         course = CourseFactory.create(org='edX', course='999')
         url = utils.course_image_url(course)
         self.assertEquals(url, '/c4x/edX/999/asset/{0}'.format(course.course_image))
+
+
+class TestReturnAjaxStatus(unittest.TestCase):
+    """Tests for `return_ajax_status` decorator."""
+    def setUp(self):
+        self.true_view_func = lambda *args, **kwargs: True
+        self.true_extra_view_func = lambda *args, **kwargs: (True, {'msg': 'some message'})
+        self.false_view_func = lambda *args, **kwargs: False
+
+    def test_success_response(self):
+        request = None
+        response = utils.return_ajax_status(self.true_view_func)(request)
+        status = json.loads(response.content).get('success')
+        self.assertTrue(status)
+
+    def test_fail_response(self):
+        request = None
+        response = utils.return_ajax_status(self.false_view_func)(request)
+        status = json.loads(response.content).get('success')
+        self.assertFalse(status)
+
+    def test_extra_response_data(self):
+        request = None
+        response = utils.return_ajax_status(self.true_extra_view_func)(request)
+        resp = json.loads(response.content)
+
+        self.assertTrue(resp.get('success'))
+        self.assertEqual(resp.get('msg'), 'some message')
 
 
 class TestGenerateSubs(unittest.TestCase):
@@ -344,3 +372,80 @@ class TestDownloadYoutubeSubs(ModuleStoreTestCase):
                 NotFoundError, contentstore().find, content_location)
 
         self.clear_subs_content(bad_youtube_subs)
+
+
+class TestGenerateSubsFromSource(TestDownloadYoutubeSubs):
+    """Tests for `generate_subs_from_source` function."""
+
+    def test_success_generating_subs(self):
+        youtube_subs = {
+            0.5: 'JMD_ifUUfsU',
+            1.0: 'hI10vDNYz4M',
+            2.0: 'AKqURZnYqpk'
+        }
+        srt_filedata = """
+1
+00:00:10,500 --> 00:00:13,000
+Elephant's Dream
+
+2
+00:00:15,000 --> 00:00:18,000
+At the left we can see...
+        """
+        self.clear_subs_content(youtube_subs)
+
+        status = utils.generate_subs_from_source(
+            youtube_subs,
+            'srt',
+            srt_filedata,
+            self.course)
+        self.assertTrue(status)
+
+        # Check assets status after importing subtitles.
+        for subs_id in youtube_subs.values():
+            filename = 'subs_{0}.srt.sjson'.format(subs_id)
+            content_location = StaticContent.compute_location(
+                self.org, self.number, filename)
+            self.assertTrue(contentstore().find(content_location))
+
+        self.clear_subs_content(youtube_subs)
+
+    def test_fail_bad_subs_type(self):
+        youtube_subs = {
+            0.5: 'JMD_ifUUfsU',
+            1.0: 'hI10vDNYz4M',
+            2.0: 'AKqURZnYqpk'
+        }
+
+        srt_filedata = """
+1
+00:00:10,500 --> 00:00:13,000
+Elephant's Dream
+
+2
+00:00:15,000 --> 00:00:18,000
+At the left we can see...
+        """
+
+        status = utils.generate_subs_from_source(
+            youtube_subs,
+            'BAD_FORMAT',
+            srt_filedata,
+            self.course)
+        self.assertFalse(status)
+
+    def test_fail_bad_subs_filedata(self):
+        youtube_subs = {
+            0.5: 'JMD_ifUUfsU',
+            1.0: 'hI10vDNYz4M',
+            2.0: 'AKqURZnYqpk'
+        }
+
+        srt_filedata = """BAD_DATA"""
+
+        status = utils.generate_subs_from_source(
+            youtube_subs,
+            'srt',
+            srt_filedata,
+            self.course)
+        self.assertFalse(status)
