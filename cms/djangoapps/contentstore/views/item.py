@@ -2,27 +2,35 @@
 
 import os
 import logging
+import json
 from uuid import uuid4
 
 
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseBadRequest
+from django.http import HttpResponse, Http404
 from django.template.defaultfilters import slugify
 
 from xmodule.modulestore import Location
 from xmodule.modulestore.django import modulestore
 from xmodule.modulestore.inheritance import own_metadata
 from xmodule.modulestore.exceptions import ItemNotFoundError, InvalidLocationError
+from xmodule.contentstore.django import contentstore
+from xmodule.contentstore.content import StaticContent
+from xmodule.exceptions import NotFoundError
 
 from util.json_request import expect_json, JsonResponse
 from ..utils import (get_modulestore, manage_video_subtitles,
-                     return_ajax_status, generate_subs_from_source)
+                     return_ajax_status, generate_subs_from_source,
+                     generate_srt_from_sjson)
 from .access import has_access
 from .requests import _xmodule_recurse
 from xmodule.x_module import XModuleDescriptor
 
-__all__ = ['save_item', 'create_item', 'delete_item', 'upload_subtitles']
+__all__ = [
+    'save_item', 'create_item', 'delete_item', 'upload_subtitles',
+    'download_subtitles']
 
 log = logging.getLogger(__name__)
 
@@ -277,3 +285,87 @@ def upload_subtitles(request):
         return False
 
     return status
+
+
+@login_required
+def download_subtitles(request):
+    """Try to download subtitles for current modules."""
+
+    # This view return True/False, cause we use `return_ajax_status`
+    # view decorator.
+
+    item_location = request.GET.get('id')
+    if not item_location:
+        log.error('GET data without "id" property.')
+        raise Http404
+
+    try:
+        item = modulestore().get_item(item_location)
+    except (ItemNotFoundError, InvalidLocationError):
+        log.error("Can't find item by location.")
+        raise Http404
+
+    # Check permissions for this user within this course.
+    if not has_access(request.user, item_location):
+        raise PermissionDenied()
+
+    if item.category != 'video':
+        log.error('Subtitles are supported only for video" modules.')
+        raise Http404
+
+    speed = 1
+    speed_subs = {
+        0.75: item.youtube_id_0_75,
+        1: item.youtube_id_1_0,
+        1.25: item.youtube_id_1_25,
+        1.5: item.youtube_id_1_5
+    }
+
+    if any(speed_subs.values()):
+
+        # Iterate from highest to lowest speed and try to find available
+        # subtitles in the store.
+        sjson_subtitles = None
+        youtube_id = None
+        for speed, youtube_id in sorted(
+            [i for i in speed_subs.iteritems() if i[1]], reverse=True
+        ):
+            filename = 'subs_{0}.srt.sjson'.format(youtube_id)
+            content_location = StaticContent.compute_location(
+                item.location.org, item.location.course, filename)
+            try:
+                sjson_subtitles = contentstore().find(content_location)
+                break
+            except NotFoundError:
+                continue
+
+        if sjson_subtitles is None or youtube_id is None:
+            log.error("Can't find content in storage for youtube IDs.")
+            raise Http404
+
+        srt_file_name = youtube_id
+
+    elif item.sub:
+        filename = 'subs_{0}.srt.sjson'.format(item.sub)
+        content_location = StaticContent.compute_location(
+            item.location.org, item.location.course, filename)
+        try:
+            sjson_subtitles = contentstore().find(content_location)
+        except NotFoundError:
+            log.error("Can't find content in storage for non-youtube sub.")
+            raise Http404
+
+        srt_file_name = item.sub
+    else:
+        log.error('Missing or blank "youtube" attribute and "source" tag.')
+        raise Http404
+
+    str_subs = generate_srt_from_sjson(json.loads(sjson_subtitles.data), speed)
+    if str_subs is None:
+        raise Http404
+
+    response = HttpResponse(str_subs, content_type='application/x-subrip')
+    response['Content-Disposition'] = 'attachment; filename="{0}.srt"'.format(
+        srt_file_name)
+
+    return response
