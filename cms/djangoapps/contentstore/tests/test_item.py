@@ -4,22 +4,20 @@ import json
 import datetime
 from pytz import UTC
 import tempfile
+from uuid import uuid4
 from django.core.urlresolvers import reverse
-
 from django.template.defaultfilters import slugify
 
 from contentstore.tests.utils import CourseTestCase
 from xmodule.modulestore.tests.factories import CourseFactory
-from django.core.urlresolvers import reverse
 from xmodule.capa_module import CapaDescriptor
 import json
 from xmodule.modulestore.django import modulestore
 from xmodule.modulestore.inheritance import own_metadata
+from cache_toolbox.core import del_cached_content
 from xmodule.contentstore.django import contentstore
 from xmodule.contentstore.content import StaticContent
 from xmodule.exceptions import NotFoundError
-import datetime
-from pytz import UTC
 
 
 class DeleteItem(CourseTestCase):
@@ -609,3 +607,193 @@ At the left we can see...
         self.good_srt_file.close()
         self.bad_data_srt_file.close()
         self.bad_name_srt_file.close()
+
+
+class DownloadSubtitles(BaseSubtitles):
+    """Tests for '/download_subtitles' url."""
+
+    def save_subs_to_store(self, subs, subs_id):
+        """Save subtitles into `StaticContent`."""
+        filedata = json.dumps(subs, indent=2)
+        mime_type = 'application/json'
+        filename = 'subs_{0}.srt.sjson'.format(subs_id)
+
+        content_location = StaticContent.compute_location(
+            self.org, self.number, filename)
+        content = StaticContent(content_location, filename, mime_type, filedata)
+        contentstore().save(content)
+        del_cached_content(content_location)
+        return content_location
+
+    def remove_subs_from_store(self, subs_id):
+        """Remove from store, if subtitles content exists."""
+        filename = 'subs_{0}.srt.sjson'.format(subs_id)
+        content_location = StaticContent.compute_location(
+            self.org, self.number, filename)
+        try:
+            content = contentstore().find(content_location)
+            contentstore().delete(content.get_id())
+        except NotFoundError:
+            pass
+
+    def test_success_download_youtube_speed_1(self):
+        data = '<video youtube="1:JMD_ifUUfsU" />'
+        modulestore().update_item(self.item_location, data)
+
+        subs = {
+            'start': [100, 200, 240],
+            'end': [200, 240, 380],
+            'text': [
+                'subs #1',
+                'subs #2',
+                'subs #3'
+            ]
+        }
+        self.save_subs_to_store(subs, 'JMD_ifUUfsU')
+
+        resp = self.client.get(
+            reverse('download_subtitles'), {'id': self.item_location})
+        self.assertEqual(resp.status_code, 200)
+
+    def test_success_download_youtube_speed_1_5(self):
+        data = '<video youtube="1.5:JMD_ifUUfsU" />'
+        modulestore().update_item(self.item_location, data)
+
+        subs = {
+            'start': [100, 200, 240],
+            'end': [200, 240, 380],
+            'text': [
+                'subs #1',
+                'subs #2',
+                'subs #3'
+            ]
+        }
+        self.save_subs_to_store(subs, 'JMD_ifUUfsU')
+
+        resp = self.client.get(
+            reverse('download_subtitles'), {'id': self.item_location})
+        self.assertEqual(resp.status_code, 200)
+
+    def test_success_download_nonyoutube(self):
+        subs_id = str(uuid4())
+        data = """
+<video youtube="" sub="{}">
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.mp4"/>
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.webm"/>
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.ogv"/>
+</video>
+""".format(subs_id)
+        modulestore().update_item(self.item_location, data)
+
+        subs = {
+            'start': [100, 200, 240],
+            'end': [200, 240, 380],
+            'text': [
+                'subs #1',
+                'subs #2',
+                'subs #3'
+            ]
+        }
+        self.save_subs_to_store(subs, subs_id)
+
+        resp = self.client.get(
+            reverse('download_subtitles'), {'id': self.item_location})
+        self.assertEqual(resp.status_code, 200)
+
+        self.remove_subs_from_store(subs_id)
+
+    def test_fail_data_without_file(self):
+        resp = self.client.get(
+            reverse('download_subtitles'), {'id': ''})
+        self.assertEqual(resp.status_code, 404)
+
+        resp = self.client.get(
+            reverse('download_subtitles'), {})
+        self.assertEqual(resp.status_code, 404)
+
+    def test_fail_data_with_bad_location(self):
+        # Test for raising `InvalidLocationError` exception.
+        resp = self.client.get(
+            reverse('download_subtitles'), {'id': 'BAD_LOCATION'})
+        self.assertEqual(resp.status_code, 404)
+
+        # Test for raising `ItemNotFoundError` exception.
+        resp = self.client.get(
+            reverse('download_subtitles'),
+            {'id': '{0}_{1}'.format(self.item_location, 'BAD_LOCATION')})
+        self.assertEqual(resp.status_code, 404)
+
+    def test_fail_for_non_video_module(self):
+        # Video module: setup
+        data = {
+            'parent_location': str(self.course_location),
+            'category': 'videoalpha',
+            'type': 'videoalpha'
+        }
+        resp = self.client.post(reverse('create_item'), data)
+        item_location = json.loads(resp.content).get('id')
+        data = '<videoalpha youtube="0.75:JMD_ifUUfsU,1.0:hI10vDNYz4M" />'
+        modulestore().update_item(item_location, data)
+
+        # Video module: testing
+        resp = self.client.get(
+            reverse('download_subtitles'), {'id': item_location})
+        self.assertEqual(resp.status_code, 404)
+
+    def test_fail_bad_xml(self):
+        data = '<<<video youtube="0.75:JMD_ifUUfsU,1.25:AKqURZnYqpk,1.50:DYpADpL7jAY" />'
+        modulestore().update_item(self.item_location, data)
+
+        resp = self.client.get(
+            reverse('download_subtitles'), {'id': self.item_location})
+        self.assertEqual(resp.status_code, 404)
+
+    def test_fail_youtube_subs_dont_exist(self):
+        resp = self.client.get(
+            reverse('download_subtitles'), {'id': self.item_location})
+        self.assertEqual(resp.status_code, 404)
+
+    def test_fail_nonyoutube_subs_dont_exist(self):
+        data = """
+<video youtube="" sub="UNDEFINED">
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.mp4"/>
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.webm"/>
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.ogv"/>
+</video>
+"""
+        modulestore().update_item(self.item_location, data)
+
+        resp = self.client.get(
+            reverse('download_subtitles'), {'id': self.item_location})
+        self.assertEqual(resp.status_code, 404)
+
+    def test_empty_youtube_attr_and_sub_attr(self):
+        data = """
+<video youtube="">
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.mp4"/>
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.webm"/>
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.ogv"/>
+</video>
+"""
+        modulestore().update_item(self.item_location, data)
+
+        resp = self.client.get(
+            reverse('download_subtitles'), {'id': self.item_location})
+        self.assertEqual(resp.status_code, 404)
+
+    def test_fail_bad_sjson_subs(self):
+        data = '<video youtube="1:JMD_ifUUfsU" />'
+        modulestore().update_item(self.item_location, data)
+
+        subs = {
+            'start': [100, 200, 240],
+            'end': [200, 240, 380],
+            'text': [
+                'subs #1'
+            ]
+        }
+        self.save_subs_to_store(subs, 'JMD_ifUUfsU')
+
+        resp = self.client.get(
+            reverse('download_subtitles'), {'id': self.item_location})
+        self.assertEqual(resp.status_code, 404)
