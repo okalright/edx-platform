@@ -23,8 +23,11 @@ from xmodule.contentstore.content import StaticContent
 from xmodule.contentstore.django import contentstore
 from xmodule.modulestore import Location
 from xmodule.modulestore.django import modulestore
+from xmodule.modulestore.inheritance import own_metadata
 from xmodule.modulestore.exceptions import ItemNotFoundError
 from xmodule.modulestore.draft import DIRECT_ONLY_CATEGORIES
+from xmodule.exceptions import NotFoundError
+
 
 log = logging.getLogger(__name__)
 
@@ -393,19 +396,49 @@ def download_youtube_subs(youtube_subs, item):
     return True
 
 
-def manage_video_subtitles(item):
+def remove_subs_from_store(subs_id, item):
+    """Remove from store, if subtitles content exists."""
+    filename = 'subs_{0}.srt.sjson'.format(subs_id)
+    content_location = StaticContent.compute_location(
+        item.location.org, item.location.course, filename)
+    try:
+        content = contentstore().find(content_location)
+        contentstore().delete(content.get_id())
+    except NotFoundError:
+        pass
+
+
+def manage_video_subtitles(old_item, new_item):
     """Function for managing subtitles."""
 
     youtube_subs = {
-        0.75: item.youtube_id_0_75,
-        1: item.youtube_id_1_0,
-        1.25: item.youtube_id_1_25,
-        1.5: item.youtube_id_1_5
+        0.75: new_item.youtube_id_0_75,
+        1: new_item.youtube_id_1_0,
+        1.25: new_item.youtube_id_1_25,
+        1.5: new_item.youtube_id_1_5
     }
 
-    status = download_youtube_subs(youtube_subs, item)
+    # If user has changed YT id, we remove subtitles.
+    if new_item.youtube_id_1_0 != old_item.youtube_id_1_0:
+        for youtube_id in youtube_subs.values():
+            if youtube_id:
+                remove_subs_from_store(youtube_id, new_item)
 
-    return status
+    # If user has changed HTML5 sources, we remove subtitles.
+    old_src = set([src for src in old_item.html5_sources if src])
+    new_src = set([src for src in new_item.html5_sources if src])
+    if (old_src - new_src) and old_item.sub:
+        remove_subs_from_store(old_item.sub, new_item)
+        if new_item.sub == old_item.sub:
+            new_item.sub = ''
+            new_item.save()
+            store = get_modulestore(Location(new_item.location))
+            store.update_metadata(new_item.location, own_metadata(new_item))
+
+    # Always download fresh subtitles from Youtube service if video
+    # module has youtube type.
+    if new_item.youtube_id_1_0:
+        download_youtube_subs(youtube_subs, new_item)
 
 
 def generate_subs_from_source(speed_subs, subs_type, subs_filedata, item):

@@ -8,7 +8,9 @@ from uuid import uuid4
 from django.core.urlresolvers import reverse
 from django.template.defaultfilters import slugify
 
+from contentstore import utils
 from contentstore.tests.utils import CourseTestCase
+from cache_toolbox.core import del_cached_content
 from xmodule.modulestore.tests.factories import CourseFactory
 from xmodule.capa_module import CapaDescriptor
 import json
@@ -411,7 +413,7 @@ At the left we can see...
             })
 
         self.assertEqual(resp.status_code, 200)
-        self.assertTrue(json.loads(resp.content).get('success'))
+        self.assertFalse(json.loads(resp.content).get('success'))
 
         item = modulestore().get_item(self.item_location)
         self.assertEqual(item.sub, '')
@@ -421,7 +423,8 @@ At the left we can see...
             filename = 'subs_{0}.srt.sjson'.format(youtube_id)
             content_location = StaticContent.compute_location(
                 self.org, self.number, filename)
-            self.assertTrue(contentstore().find(content_location))
+            self.assertRaises(
+                NotFoundError, contentstore().find, content_location)
 
     def test_success_video_module_source_subs_uploading(self):
         data = """
@@ -700,7 +703,7 @@ class DownloadSubtitles(BaseSubtitles):
             reverse('download_subtitles'), {'id': self.item_location})
         self.assertEqual(resp.status_code, 200)
 
-        self.remove_subs_from_store(subs_id)
+        utils.remove_subs_from_store(subs_id, self.item)
 
     def test_fail_data_without_file(self):
         resp = self.client.get(
