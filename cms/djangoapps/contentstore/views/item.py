@@ -30,7 +30,7 @@ from xmodule.x_module import XModuleDescriptor
 
 __all__ = [
     'save_item', 'create_item', 'delete_item', 'upload_subtitles',
-    'download_subtitles']
+    'download_subtitles', 'check_subtitles']
 
 log = logging.getLogger(__name__)
 
@@ -293,9 +293,6 @@ def upload_subtitles(request):
 def download_subtitles(request):
     """Try to download subtitles for current modules."""
 
-    # This view return True/False, cause we use `return_ajax_status`
-    # view decorator.
-
     item_location = request.GET.get('id')
     if not item_location:
         log.error('GET data without "id" property.')
@@ -324,29 +321,8 @@ def download_subtitles(request):
     }
 
     if any(speed_subs.values()):
-
-        # Iterate from highest to lowest speed and try to find available
-        # subtitles in the store.
-        sjson_subtitles = None
-        youtube_id = None
-        for speed, youtube_id in sorted(
-            [i for i in speed_subs.iteritems() if i[1]], reverse=True
-        ):
-            filename = 'subs_{0}.srt.sjson'.format(youtube_id)
-            content_location = StaticContent.compute_location(
-                item.location.org, item.location.course, filename)
-            try:
-                sjson_subtitles = contentstore().find(content_location)
-                break
-            except NotFoundError:
-                continue
-
-        if sjson_subtitles is None or youtube_id is None:
-            log.error("Can't find content in storage for youtube IDs.")
-            raise Http404
-
-        srt_file_name = youtube_id
-
+        log.error("We don't support downloading subs for Youtube video modules.")
+        raise Http404
     elif item.sub:
         filename = 'subs_{0}.srt.sjson'.format(item.sub)
         content_location = StaticContent.compute_location(
@@ -359,7 +335,7 @@ def download_subtitles(request):
 
         srt_file_name = item.sub
     else:
-        log.error('Missing or blank "youtube" attribute and "source" tag.')
+        log.error('Blank "sub" field.')
         raise Http404
 
     str_subs = generate_srt_from_sjson(json.loads(sjson_subtitles.data), speed)
@@ -371,3 +347,56 @@ def download_subtitles(request):
         srt_file_name)
 
     return response
+
+
+@login_required
+@return_ajax_status
+def check_subtitles(request):
+    """Check subtitles availability for current modules."""
+
+    # This view return True/False, cause we use `return_ajax_status`
+    # view decorator.
+
+    item_location = request.GET.get('id')
+    if not item_location:
+        log.error('GET data without "id" property.')
+        return False
+
+    try:
+        item = modulestore().get_item(item_location)
+    except (ItemNotFoundError, InvalidLocationError):
+        log.error("Can't find item by location.")
+        return False
+
+    # Check permissions for this user within this course.
+    if not has_access(request.user, item_location):
+        raise PermissionDenied()
+
+    if item.category != 'video':
+        log.error('Subtitles are supported only for video" modules.')
+        return False
+
+    speed_subs = {
+        0.75: item.youtube_id_0_75,
+        1: item.youtube_id_1_0,
+        1.25: item.youtube_id_1_25,
+        1.5: item.youtube_id_1_5
+    }
+
+    if any(speed_subs.values()):
+        log.error("We don't support downloading subs for Youtube video modules.")
+        return False
+    elif item.sub:
+        filename = 'subs_{0}.srt.sjson'.format(item.sub)
+        content_location = StaticContent.compute_location(
+            item.location.org, item.location.course, filename)
+        try:
+            contentstore().find(content_location)
+        except NotFoundError:
+            log.error("Can't find content in storage for non-youtube sub.")
+            return False
+    else:
+        log.error('Blank "sub" field.')
+        return False
+
+    return True

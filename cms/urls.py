@@ -22,6 +22,7 @@ urlpatterns = ('',  # nopep8
 
     url(r'^upload_subtitles$', 'contentstore.views.upload_subtitles', name='upload_subtitles'),
     url(r'^download_subtitles$', 'contentstore.views.download_subtitles', name='download_subtitles'),
+    url(r'^check_subtitles$', 'contentstore.views.check_subtitles', name='check_subtitles'),
 
     url(r'^create_draft$', 'contentstore.views.create_draft', name='create_draft'),
     url(r'^publish_draft$', 'contentstore.views.publish_draft', name='publish_draft'),

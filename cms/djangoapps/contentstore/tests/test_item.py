@@ -26,7 +26,7 @@ class DeleteItem(CourseTestCase):
     """Tests for '/delete_item' url."""
     def setUp(self):
         """ Creates the test course with a static page in it. """
-        super(DeleteItem, self).setUp()
+        super(TestDeleteItem, self).setUp()
         self.course = CourseFactory.create(org='mitX', number='333', display_name='Dummy Course')
 
     def test_delete_static_page(self):
@@ -320,7 +320,7 @@ class BaseSubtitles(CourseTestCase):
         }
 
 
-class ImportSubtitlesFromYoutube(BaseSubtitles):
+class TestImportSubtitlesFromYoutube(BaseSubtitles):
     """Tests for saving video item."""
 
     def test_success_video_module_subs_importing(self):
@@ -355,18 +355,18 @@ class ImportSubtitlesFromYoutube(BaseSubtitles):
                 NotFoundError, contentstore().find, content_location)
 
     def tearDown(self):
-        super(ImportSubtitlesFromYoutube, self).tearDown()
+        super(TestImportSubtitlesFromYoutube, self).tearDown()
 
         # Remove all subtitles for current module.
         self.clear_subs_content()
 
 
-class UploadSubtitles(BaseSubtitles):
+class TestUploadSubtitles(BaseSubtitles):
     """Tests for '/upload_subtitles' url."""
 
     def setUp(self):
         """Create initial data."""
-        super(UploadSubtitles, self).setUp()
+        super(TestUploadSubtitles, self).setUp()
 
         self.good_srt_file = tempfile.NamedTemporaryFile(suffix='.srt')
         self.good_srt_file.write("""
@@ -396,36 +396,6 @@ At the left we can see...
         """)
         self.bad_name_srt_file.seek(0)
 
-    def test_success_video_module_youtube_subs_uploading(self):
-        # Check assets status before uploading subtitles.
-        for youtube_id in self.get_youtube_ids().values():
-            filename = 'subs_{0}.srt.sjson'.format(youtube_id)
-            content_location = StaticContent.compute_location(
-                self.org, self.number, filename)
-            self.assertRaises(
-                NotFoundError, contentstore().find, content_location)
-
-        resp = self.client.post(
-            reverse('upload_subtitles'),
-            {
-                'id': self.item_location,
-                'file': self.good_srt_file
-            })
-
-        self.assertEqual(resp.status_code, 200)
-        self.assertFalse(json.loads(resp.content).get('success'))
-
-        item = modulestore().get_item(self.item_location)
-        self.assertEqual(item.sub, '')
-
-        # Check assets status after uploading subtitles.
-        for youtube_id in self.get_youtube_ids().values():
-            filename = 'subs_{0}.srt.sjson'.format(youtube_id)
-            content_location = StaticContent.compute_location(
-                self.org, self.number, filename)
-            self.assertRaises(
-                NotFoundError, contentstore().find, content_location)
-
     def test_success_video_module_source_subs_uploading(self):
         data = """
 <video youtube="">
@@ -454,6 +424,36 @@ At the left we can see...
         content_location = StaticContent.compute_location(
             self.org, self.number, 'subs_{0}.srt.sjson'.format(filename))
         self.assertTrue(contentstore().find(content_location))
+
+    def test_fail_video_module_youtube_subs_uploading(self):
+        # Check assets status before uploading subtitles.
+        for youtube_id in self.get_youtube_ids().values():
+            filename = 'subs_{0}.srt.sjson'.format(youtube_id)
+            content_location = StaticContent.compute_location(
+                self.org, self.number, filename)
+            self.assertRaises(
+                NotFoundError, contentstore().find, content_location)
+
+        resp = self.client.post(
+            reverse('upload_subtitles'),
+            {
+                'id': self.item_location,
+                'file': self.good_srt_file
+            })
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(json.loads(resp.content).get('success'))
+
+        item = modulestore().get_item(self.item_location)
+        self.assertEqual(item.sub, '')
+
+        # Check assets status after uploading subtitles.
+        for youtube_id in self.get_youtube_ids().values():
+            filename = 'subs_{0}.srt.sjson'.format(youtube_id)
+            content_location = StaticContent.compute_location(
+                self.org, self.number, filename)
+            self.assertRaises(
+                NotFoundError, contentstore().find, content_location)
 
     def test_fail_data_without_id(self):
         resp = self.client.post(
@@ -605,14 +605,14 @@ At the left we can see...
         self.assertFalse(json.loads(resp.content).get('success'))
 
     def tearDown(self):
-        super(UploadSubtitles, self).tearDown()
+        super(TestUploadSubtitles, self).tearDown()
 
         self.good_srt_file.close()
         self.bad_data_srt_file.close()
         self.bad_name_srt_file.close()
 
 
-class DownloadSubtitles(BaseSubtitles):
+class TestDownloadSubtitles(BaseSubtitles):
     """Tests for '/download_subtitles' url."""
 
     def save_subs_to_store(self, subs, subs_id):
@@ -639,7 +639,7 @@ class DownloadSubtitles(BaseSubtitles):
         except NotFoundError:
             pass
 
-    def test_success_download_youtube_speed_1(self):
+    def test_fail_download_youtube(self):
         data = '<video youtube="1:JMD_ifUUfsU" />'
         modulestore().update_item(self.item_location, data)
 
@@ -656,26 +656,7 @@ class DownloadSubtitles(BaseSubtitles):
 
         resp = self.client.get(
             reverse('download_subtitles'), {'id': self.item_location})
-        self.assertEqual(resp.status_code, 200)
-
-    def test_success_download_youtube_speed_1_5(self):
-        data = '<video youtube="1.5:JMD_ifUUfsU" />'
-        modulestore().update_item(self.item_location, data)
-
-        subs = {
-            'start': [100, 200, 240],
-            'end': [200, 240, 380],
-            'text': [
-                'subs #1',
-                'subs #2',
-                'subs #3'
-            ]
-        }
-        self.save_subs_to_store(subs, 'JMD_ifUUfsU')
-
-        resp = self.client.get(
-            reverse('download_subtitles'), {'id': self.item_location})
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 404)
 
     def test_success_download_nonyoutube(self):
         subs_id = str(uuid4())
@@ -735,25 +716,29 @@ class DownloadSubtitles(BaseSubtitles):
         }
         resp = self.client.post(reverse('create_item'), data)
         item_location = json.loads(resp.content).get('id')
-        data = '<videoalpha youtube="0.75:JMD_ifUUfsU,1.0:hI10vDNYz4M" />'
+        subs_id = str(uuid4())
+        data = """
+<videoalpha youtube="" sub="{}">
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.mp4"/>
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.webm"/>
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.ogv"/>
+</videoalpha>
+""".format(subs_id)
         modulestore().update_item(item_location, data)
 
-        # Video module: testing
+        subs = {
+            'start': [100, 200, 240],
+            'end': [200, 240, 380],
+            'text': [
+                'subs #1',
+                'subs #2',
+                'subs #3'
+            ]
+        }
+        self.save_subs_to_store(subs, subs_id)
+
         resp = self.client.get(
             reverse('download_subtitles'), {'id': item_location})
-        self.assertEqual(resp.status_code, 404)
-
-    def test_fail_bad_xml(self):
-        data = '<<<video youtube="0.75:JMD_ifUUfsU,1.25:AKqURZnYqpk,1.50:DYpADpL7jAY" />'
-        modulestore().update_item(self.item_location, data)
-
-        resp = self.client.get(
-            reverse('download_subtitles'), {'id': self.item_location})
-        self.assertEqual(resp.status_code, 404)
-
-    def test_fail_youtube_subs_dont_exist(self):
-        resp = self.client.get(
-            reverse('download_subtitles'), {'id': self.item_location})
         self.assertEqual(resp.status_code, 404)
 
     def test_fail_nonyoutube_subs_dont_exist(self):
@@ -785,7 +770,14 @@ class DownloadSubtitles(BaseSubtitles):
         self.assertEqual(resp.status_code, 404)
 
     def test_fail_bad_sjson_subs(self):
-        data = '<video youtube="1:JMD_ifUUfsU" />'
+        subs_id = str(uuid4())
+        data = """
+<video youtube="" sub="{}">
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.mp4"/>
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.webm"/>
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.ogv"/>
+</video>
+""".format(subs_id)
         modulestore().update_item(self.item_location, data)
 
         subs = {
@@ -800,3 +792,155 @@ class DownloadSubtitles(BaseSubtitles):
         resp = self.client.get(
             reverse('download_subtitles'), {'id': self.item_location})
         self.assertEqual(resp.status_code, 404)
+
+
+class TestCheckSubtitles(BaseSubtitles):
+    """Tests for '/check_subtitles' url."""
+
+    def save_subs_to_store(self, subs, subs_id):
+        """Save subtitles into `StaticContent`."""
+        filedata = json.dumps(subs, indent=2)
+        mime_type = 'application/json'
+        filename = 'subs_{0}.srt.sjson'.format(subs_id)
+
+        content_location = StaticContent.compute_location(
+            self.org, self.number, filename)
+        content = StaticContent(content_location, filename, mime_type, filedata)
+        contentstore().save(content)
+        del_cached_content(content_location)
+        return content_location
+
+    def remove_subs_from_store(self, subs_id):
+        """Remove from store, if subtitles content exists."""
+        filename = 'subs_{0}.srt.sjson'.format(subs_id)
+        content_location = StaticContent.compute_location(
+            self.org, self.number, filename)
+        try:
+            content = contentstore().find(content_location)
+            contentstore().delete(content.get_id())
+        except NotFoundError:
+            pass
+
+    def test_success_download_nonyoutube(self):
+        subs_id = str(uuid4())
+        data = """
+<video youtube="" sub="{}">
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.mp4"/>
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.webm"/>
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.ogv"/>
+</video>
+""".format(subs_id)
+        modulestore().update_item(self.item_location, data)
+
+        subs = {
+            'start': [100, 200, 240],
+            'end': [200, 240, 380],
+            'text': [
+                'subs #1',
+                'subs #2',
+                'subs #3'
+            ]
+        }
+        self.save_subs_to_store(subs, subs_id)
+
+        resp = self.client.get(
+            reverse('check_subtitles'), {'id': self.item_location})
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(json.loads(resp.content).get('success'))
+
+        utils.remove_subs_from_store(subs_id, self.item)
+
+    def test_fail_check_youtube(self):
+        data = '<video youtube="1:JMD_ifUUfsU" />'
+        modulestore().update_item(self.item_location, data)
+
+        subs = {
+            'start': [100, 200, 240],
+            'end': [200, 240, 380],
+            'text': [
+                'subs #1',
+                'subs #2',
+                'subs #3'
+            ]
+        }
+        self.save_subs_to_store(subs, 'JMD_ifUUfsU')
+
+        resp = self.client.get(
+            reverse('check_subtitles'), {'id': self.item_location})
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(json.loads(resp.content).get('success'))
+
+    def test_fail_data_without_file(self):
+        resp = self.client.get(
+            reverse('check_subtitles'), {'id': ''})
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(json.loads(resp.content).get('success'))
+
+        resp = self.client.get(
+            reverse('check_subtitles'), {})
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(json.loads(resp.content).get('success'))
+
+    def test_fail_data_with_bad_location(self):
+        # Test for raising `InvalidLocationError` exception.
+        resp = self.client.get(
+            reverse('check_subtitles'), {'id': 'BAD_LOCATION'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(json.loads(resp.content).get('success'))
+
+        # Test for raising `ItemNotFoundError` exception.
+        resp = self.client.get(
+            reverse('check_subtitles'),
+            {'id': '{0}_{1}'.format(self.item_location, 'BAD_LOCATION')})
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(json.loads(resp.content).get('success'))
+
+    def test_fail_for_non_video_module(self):
+        # Video module: setup
+        data = {
+            'parent_location': str(self.course_location),
+            'category': 'videoalpha',
+            'type': 'videoalpha'
+        }
+        resp = self.client.post(reverse('create_item'), data)
+        item_location = json.loads(resp.content).get('id')
+        subs_id = str(uuid4())
+        data = """
+<videoalpha youtube="" sub="{}">
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.mp4"/>
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.webm"/>
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.ogv"/>
+</videoalpha>
+""".format(subs_id)
+        modulestore().update_item(item_location, data)
+
+        subs = {
+            'start': [100, 200, 240],
+            'end': [200, 240, 380],
+            'text': [
+                'subs #1',
+                'subs #2',
+                'subs #3'
+            ]
+        }
+        self.save_subs_to_store(subs, subs_id)
+
+        resp = self.client.get(
+            reverse('check_subtitles'), {'id': item_location})
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(json.loads(resp.content).get('success'))
+
+    def test_fail_nonyoutube_subs_dont_exist(self):
+        data = """
+<video youtube="" sub="UNDEFINED">
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.mp4"/>
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.webm"/>
+    <source src="http://www.quirksmode.org/html5/videos/big_buck_bunny.ogv"/>
+</video>
+"""
+        modulestore().update_item(self.item_location, data)
+
+        resp = self.client.get(
+            reverse('check_subtitles'), {'id': self.item_location})
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(json.loads(resp.content).get('success'))
