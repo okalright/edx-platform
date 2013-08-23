@@ -23,7 +23,7 @@
         },
 
         // Convert metadata JSON to List of models
-        toModels: function(data){
+        toModels: function(data) {
             var metadata = (_.isString(data)) ? parseJSON(data) : data,
                 models = [];
 
@@ -37,6 +37,23 @@
         }
 
     });
+
+    Transcripts.Helper = (function(){
+        var _youtubeParser = function(url) {
+            var regExp = /.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#\&\?]*).*/;
+            var match = url.match(regExp);
+            if (match&&match[1].length==11){
+                return match[1];
+            } else {
+                return false;
+            }
+        }
+
+
+        return {
+            youtubeParser: _youtubeParser
+        }
+    }());
 
 
 }(this));
