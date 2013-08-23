@@ -11,7 +11,7 @@
 
 ## js templates
 
-<script id="transcripts-metadata-list-entry" type="text/template">
+<script id="metadata-videolist-entry" type="text/template">
     <%static:include path="js/transcripts/metadata-list-entry.underscore" />
 </script>
 
@@ -65,10 +65,11 @@ Flag for checking HTML5 subtitles availability.
     video_url.update({
         'help': 'To be sure all students can view the video, we recommend providing alternate versions of the same video: mp4, webm and youtube (if available).',
         'display_name': 'Video URL',
-        'field_name': 'video_url'
+        'field_name': 'video_url',
+        'type': 'VideoList'
     })
 
-    video_url['value'].append(youtube_id_1_0['value'])
+    video_url['value'].insert(0, youtube_id_1_0['value'])
 
     metadata = {
         'display_name': display_name,
@@ -81,7 +82,7 @@ Flag for checking HTML5 subtitles availability.
 
 <script type="text/javascript">
     $(document).ready(function(){
-        var transcripts = new Transcripts({
+        var transcripts = new Transcripts.Editor({
                 el: $('.component-editor').find('.basic_metadata_edit')
             });
 

@@ -1,13 +1,13 @@
-<div class="wrapper-comp-setting metadata-list-enum">
+<div class="wrapper-comp-setting metadata-videolist-enum">
   <label class="label setting-label" for="<%= uniqueId %>"><%= model.get('display_name')%></label>
-  <div id="<%= uniqueId %>" class="wrapper-list-settings">
-    <ol class="list-settings <%= model.get('field_name') %>">
-
-    </ol>
-
-    <a href="#" class="create-action create-setting">
-      <i class="icon-plus"></i><%= gettext("Add") %> <span class="sr"><%= model.get('display_name')%></span>
-    </a>
+  <div id="<%= uniqueId %>" class="wrapper-videolist-settings">
+    <div class="wrapper-videolist-url"><input type="text" class="input" value="<%= model.get('value')[0] %>"></div>
+    <div class="wrapper-videolist-urls">
+      <a href="#" class="collapse-action collapse-setting">
+        <i class="icon-plus"></i><%= gettext("Add more video sources") %> <span class="sr"><%= model.get('display_name')%></span>
+      </a>
+      <ol class="videolist-settings"></ol>
+    </div>
   </div>
   <button class="action setting-clear inactive" type="button" name="setting-clear" value="<%= gettext("Clear") %>" data-tooltip="<%= gettext("Clear") %>">
     <i class="icon-undo"></i>

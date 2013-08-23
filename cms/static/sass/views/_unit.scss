@@ -828,6 +828,92 @@ body.course.unit {
           }
         }
       }
+
+
+      // TYPE: enumerated video lists of metadata sets
+      .metadata-videolist-enum {
+
+        * {
+          @include box-sizing(border-box);
+        }
+
+        // label
+        .setting-label {
+          vertical-align: top;
+          margin-top: ($baseline/2);
+        }
+
+        // inputs and labels
+        .wrapper-videolist-settings {
+          @include size(45%,100%);
+          display: inline-block;
+          min-width: ($baseline*5);
+
+          .wrapper-videolist-url{
+            margin-bottom: ($baseline/2);
+            padding: 0 ($baseline/3);
+
+            // inputs
+            .input {
+              width: 100%;
+              vertical-align: middle;
+            }
+          }
+
+          .wrapper-videolist-urls{
+            background: $lightGrey;
+            padding: ($baseline/3);
+
+            // enumerated fields
+            .videolist-settings {
+              margin: 0;
+              display: none;
+
+              &.is-visible{
+                display: block;
+              }
+
+              .videolist-settings-item {
+                margin-bottom: ($baseline/2);
+              }
+
+              // inputs
+              .input {
+                width: 100%;
+                vertical-align: middle;
+              }
+            }
+          }
+        }
+
+        // actions
+        .collapse-action, .setting-clear {
+
+        }
+
+        .setting-clear {
+          vertical-align: top;
+          margin-top: ($baseline/4);
+        }
+
+        .collapse-setting {
+          // @extend .ui-btn-flat-outline;
+          @extend .t-action3;
+          display: block;
+          width: 100%;
+          padding: ($baseline/2);
+          font-weight: 600;
+
+          *[class^="icon-"] {
+            margin-right: ($baseline/4);
+          }
+
+          // STATE: disabled
+          &.is-disabled {
+
+          }
+        }
+      }
     }
   }
 }
