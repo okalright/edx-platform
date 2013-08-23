@@ -181,11 +181,42 @@
                 var entry = $(event.currentTarget).val(),
                     data = Transcripts.Utils.parseLink(entry);
 
+                    switch (data.type) {
+                        case 'youtube':
+                            this.fetchCaptions(data.data)
+                                .always(function(response, statusText){
+                                    if (response.status === 200) {
+                                       console.log(arguments);
+                                    } else {
+                                        console.log('No caption!!!');
+                                    }
+                                });
+                            break;
+                        case 'html5':
+
+                            break;
+                    }
+
                     console.log(data)
             };
 
             return _.debounce(checker, 300);
-        }())
+        }()),
+
+        fetchCaptions: function(video_id){
+         var xhr = $.ajax({
+                url: 'http://video.google.com/timedtext',
+                data: {
+                    lang: 'en',
+                    v: video_id
+                },
+                timeout: 500,
+                dataType: 'jsonp'
+            });
+
+            return xhr;
+        }
+
 
     });
 
