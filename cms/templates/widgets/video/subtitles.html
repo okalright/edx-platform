@@ -69,7 +69,10 @@ Flag for checking HTML5 subtitles availability.
         'type': 'VideoList'
     })
 
-    video_url['value'].insert(0, youtube_id_1_0['value'])
+    video_url['value'].insert(\
+      0,
+      'http://youtu.be/{0}'.format(youtube_id_1_0['value'])
+    )
 
     metadata = {
         'display_name': display_name,
@@ -81,47 +84,35 @@ Flag for checking HTML5 subtitles availability.
 
 
 <script type="text/javascript">
-    $(document).ready(function(){
-        var transcripts = new Transcripts.Editor({
-                el: $('.component-editor').find('.basic_metadata_edit')
-            });
 
-        function sync (from, to) {
-            from.each(function(m) {
-                var model = to.findWhere({
-                        field_name: m.getFieldName()
-                    });
+    var transcripts = new Transcripts.Editor({
+            el: $('.component-editor').find('.basic_metadata_edit')
+        })
+        storage = TabsEditingDescriptor.getStorage();
 
-                if (model) {
-                    model.setValue(m.getValue());
-                }
-            });
+    TabsEditingDescriptor.Model.addModelUpdate(
+        '${html_id}',
+        '${tabName}',
+        function () {
+            // Advanced, Save
+            metadataEditor = storage.MetadataEditor;
+
+            if (metadataEditor) {
+              transcripts.syncAdvancedTab(metadataEditor.collection);
+            }
         }
+    );
 
-        TabsEditingDescriptor.Model.addModelUpdate(
-            '${html_id}',
-            '${tabName}',
-            function () {
-                // Advanced, Save
-                metadataEditor = TabsEditingDescriptor.getMetadataEditor();
+    TabsEditingDescriptor.Model.addOnSwitch(
+        '${html_id}',
+        '${tabName}',
+        function () {
+            // Basic
+            metadataEditor = storage.MetadataEditor;
 
-                if (metadataEditor) {
-                    sync(transcripts.collection, metadataEditor.collection);
-                }
+            if (metadataEditor) {
+              transcripts.syncBasicTab(metadataEditor.collection);
             }
-        );
-
-        TabsEditingDescriptor.Model.addOnSwitch(
-            '${html_id}',
-            '${tabName}',
-            function () {
-                // Basic
-                metadataEditor = TabsEditingDescriptor.getMetadataEditor();
-
-                if (metadataEditor) {
-                    sync(metadataEditor.collection, transcripts.collection);
-                }
-            }
-        );
-    });
+        }
+    );
 </script>

@@ -66,10 +66,13 @@ class @TabsEditingDescriptor
     data: TabsEditingDescriptor.Model.getValue(@html_id, current_tab)
 
   setMetadataEditor : (metadataEditor) ->
-    TabsEditingDescriptor.setMetadataEditor(metadataEditor)
+    TabsEditingDescriptor.setMetadataEditor.apply(TabsEditingDescriptor, arguments)
 
-  getMetadataEditor : () ->
-    TabsEditingDescriptor.getMetadataEditor(metadataEditor)
+  getStorage : () ->
+    TabsEditingDescriptor.getStorage()
+
+  addToStorage : (id, data) ->
+    TabsEditingDescriptor.addToStorage.apply(TabsEditingDescriptor, arguments)
 
   @Model :
     addModelUpdate : (id, tabName, modelUpdateFunction) ->
@@ -134,6 +137,9 @@ class @TabsEditingDescriptor
   @setMetadataEditor : (metadataEditor) ->
     TabsEditingDescriptor.Model.Storage['MetadataEditor'] = metadataEditor
 
-  @getMetadataEditor : () ->
-    TabsEditingDescriptor.Model.Storage['MetadataEditor']
+  @addToStorage : (id, data) ->
+    TabsEditingDescriptor.Model.Storage[id] = data
+
+  @getStorage : () ->
+    TabsEditingDescriptor.Model.Storage
 
