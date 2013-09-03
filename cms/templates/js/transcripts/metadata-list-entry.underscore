@@ -6,7 +6,14 @@
       <a href="#" class="collapse-action collapse-setting">
         <i class="icon-plus"></i><%= gettext("Add more video sources") %> <span class="sr"><%= model.get('display_name')%></span>
       </a>
-      <ol class="videolist-settings"></ol>
+      <ol class="videolist-settings">
+          <li class="videolist-settings-item">
+            <input type="text" class="input" value="<%= model.get('value')[1] %>">
+          </li>
+          <li class="videolist-settings-item">
+            <input type="text" class="input" value="<%= model.get('value')[2] %>">
+          </li>
+      </ol>
     </div>
   </div>
   <button class="action setting-clear inactive" type="button" name="setting-clear" value="<%= gettext("Clear") %>" data-tooltip="<%= gettext("Clear") %>">

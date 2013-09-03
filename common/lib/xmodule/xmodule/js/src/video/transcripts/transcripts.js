@@ -265,23 +265,12 @@
 
         // TODO: Think about mehtod of creation
         setValueInEditor: function (value) {
+            var list = this.$el.find('.input'),
+                value = value.filter(_.identity);
 
-            var list = this.$el.find('ol'),
-                url = this.$el.find('.wrapper-videolist-url input');
-
-            list.empty();
-
-            _.each(value, function(ele, index) {
-                if (index != 0) {
-                    var template = _.template(
-                        '<li class="videolist-settings-item">' +
-                            '<input type="text" class="input" value="<%= ele %>">' +
-                        '</li>'
-                    );
-                    list.append($(template({'ele': ele, 'index': index})));
-                }
-            });
-            url.val(value[0]);
+            for (var i = 0; i < 3; i += 1) {
+                list.eq(i).val(value[i] || null);
+            }
         },
 
         addAdditionalVideos: function(event) {
