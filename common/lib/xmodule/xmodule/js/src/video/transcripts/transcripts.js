@@ -243,7 +243,7 @@
             "click .setting-clear" : "clear",
             "keypress .setting-input" : "showClearButton",
             "change input" : "updateModel",
-            "click .collapse-setting" : "addAdditionalVideos",
+            "click .collapse-setting" : "toggleAdditional",
             "input input" : "checkValidity"
         },
 
@@ -271,15 +271,43 @@
             for (var i = 0; i < 3; i += 1) {
                 list.eq(i).val(value[i] || null);
             }
+
+            if (value.length > 1) {
+                this.openAdditional();
+            } else {
+                this.closeAdditional();
+            }
         },
 
-        addAdditionalVideos: function(event) {
+        openAdditional: function(event) {
             if (event && event.preventDefault) {
                 event.preventDefault();
             }
 
             this.$el.find('.videolist-settings').addClass('is-visible');
             this.$el.find('.collapse-setting').addClass('is-disabled');
+        },
+
+        closeAdditional: function(event) {
+            if (event && event.preventDefault) {
+                event.preventDefault();
+            }
+
+            this.$el.find('.videolist-settings').removeClass('is-visible');
+            this.$el.find('.collapse-setting').removeClass('is-disabled');
+        },
+
+        toggleAdditional: function(event) {
+            if (event && event.preventDefault) {
+                event.preventDefault();
+            }
+
+            if (this.$el.find('.videolist-settings').hasClass('is-visible')) {
+                this.closeAdditional.apply(this, arguments);
+            } else {
+                this.openAdditional.apply(this, arguments);
+            }
+
         },
 
         checkValidity: (function(event){
