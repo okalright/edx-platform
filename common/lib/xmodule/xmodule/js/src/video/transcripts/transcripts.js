@@ -29,9 +29,9 @@
             var cache = {};
 
             return function(url) {
-                if (typeof url !== "string") {
-                    console.log("Transcripts.Utils.parseYoutubeLink");
-                    console.log("TypeError: Wrong argument type.");
+                if (typeof url !== 'string') {
+                    console.log('Transcripts.Utils.parseYoutubeLink');
+                    console.log('TypeError: Wrong argument type.');
 
                     return false;
                 }
@@ -53,9 +53,9 @@
 
             return function (url) {
 
-                if (typeof url !== "string") {
-                    console.log("Transcripts.Utils.parseHTML5Link");
-                    console.log("TypeError: Wrong argument type.");
+                if (typeof url !== 'string') {
+                    console.log('Transcripts.Utils.parseHTML5Link');
+                    console.log('TypeError: Wrong argument type.');
 
                     return false;
                 }
@@ -65,7 +65,6 @@
                 }
 
                 var link = document.createElement('a'),
-                    result = false,
                     match;
 
                 link.href = url;
@@ -78,7 +77,7 @@
                     cache[url] = {
                         video: match[1],
                         type: match[2]
-                    }
+                    };
                 }
 
                 return cache[url];
@@ -88,9 +87,9 @@
         var _linkParser = function(url){
             var result;
 
-            if (typeof url !== "string") {
-                console.log("Transcripts.Utils.parseLink");
-                console.log("TypeError: Wrong argument type.");
+            if (typeof url !== 'string') {
+                console.log('Transcripts.Utils.parseLink');
+                console.log('TypeError: Wrong argument type.');
 
                 return false;
             }
@@ -135,17 +134,16 @@
             parseLink: _linkParser,
             getYoutubeLink: _getYoutubeLink,
             syncCollections: _syncCollections
-        }
+        };
     }());
 
 
     Transcripts.Editor = Backbone.View.extend({
 
-        tagName: "div",
+        tagName: 'div',
 
         initialize: function() {
-            var self = this,
-                metadata = this.$el.data('metadata'),
+            var metadata = this.$el.data('metadata'),
                 models = this.toModels(metadata);
 
             this.collection = new CMS.Models.MetadataCollection(models);
@@ -161,7 +159,7 @@
             var metadata = (_.isString(data)) ? JSON.parse(data) : data,
                 models = [];
 
-            for (model in metadata){
+            for (var model in metadata){
                 if (metadata.hasOwnProperty(model)) {
                     models.push(metadata[model]);
                 }
@@ -232,12 +230,12 @@
 
             // TODO: CHECK result['html5']
             if (html5Sources) {
-                html5Sources.setValue(result['html5'] || []);
+                html5Sources.setValue(result.html5 || []);
             }
 
             if (youtube) {
-                result = (result['youtube'])
-                            ? utils.parseLink(result['youtube'][0]).video
+                result = (result.youtube)
+                            ? utils.parseLink(result.youtube[0]).video
                             : '';
 
                 youtube.setValue(result);
@@ -252,14 +250,13 @@
     CMS.Views.Metadata.VideoList = CMS.Views.Metadata.AbstractEditor.extend({
 
         events : {
-            "click .setting-clear" : "clear",
-            "keypress .setting-input" : "showClearButton",
-            "change input" : "updateModel",
-            "click .collapse-setting" : "toggleAdditional",
-            "input input" : "checkValidity"
+            'click .setting-clear' : 'clear',
+            'keypress .setting-input' : 'showClearButton',
+            'change input' : 'updateModel',
+            'click .collapse-setting' : 'toggleAdditional'
         },
 
-        templateName: "metadata-videolist-entry",
+        templateName: 'metadata-videolist-entry',
         placeholders: {
             'webm': '.webm',
             'mp4': '.mp4',
@@ -267,6 +264,11 @@
         },
 
         initialize: function() {
+            this.$el.on(
+                'input', 'input',
+                _.debounce(_.bind(this.checkValidity, this), 300)
+            );
+
             CMS.Views.Metadata.AbstractEditor.prototype.initialize
                 .apply(this, arguments);
         },
@@ -280,12 +282,12 @@
 
         setValueInEditor: function (value) {
             var list = this.$el.find('.input'),
-                value = value.filter(_.identity),
-                placeholders = this.getPlaceholders(value);
+                val = value.filter(_.identity),
+                placeholders = this.getPlaceholders(val);
 
             for (var i = 0; i < 3; i += 1) {
                 list.eq(i)
-                    .val(value[i] || null)
+                    .val(val[i] || null)
                     .attr('placeholder', placeholders[i]);
             }
 
@@ -300,8 +302,7 @@
             var parseLink = Transcripts.Utils.parseLink,
                 placeholders = _.clone(this.placeholders),
                 result = [],
-                label,
-                data;
+                label, type;
 
             for (var i = 0; i < 3; i += 1) {
                 type = parseLink(value[i]).type;
@@ -314,7 +315,7 @@
                     label = placeholders.pop();
                 }
 
-                result.push(label)
+                result.push(label);
             }
 
             return result;
@@ -325,8 +326,7 @@
                 event.preventDefault();
             }
 
-            this.$el.find('.videolist-settings').addClass('is-visible');
-            this.$el.find('.collapse-setting').addClass('is-disabled');
+            this.$el.find('.videolist-additional').addClass('is-visible');
         },
 
         closeAdditional: function(event) {
@@ -334,8 +334,7 @@
                 event.preventDefault();
             }
 
-            this.$el.find('.videolist-settings').removeClass('is-visible');
-            this.$el.find('.collapse-setting').removeClass('is-disabled');
+            this.$el.find('.videolist-additional').removeClass('is-visible');
         },
 
         toggleAdditional: function(event) {
@@ -343,45 +342,47 @@
                 event.preventDefault();
             }
 
-            if (this.$el.find('.videolist-settings').hasClass('is-visible')) {
+            if (this.$el.find('.videolist-additional').hasClass('is-visible')) {
                 this.closeAdditional.apply(this, arguments);
             } else {
                 this.openAdditional.apply(this, arguments);
             }
         },
 
-        checkValidity: (function(event){
-            var self = this,
-                checker = function(event){
-                    var entry = $(event.currentTarget).val(),
-                        data = Transcripts.Utils.parseLink(entry);
+        checkValidity: function(event){
 
-                        switch (data.mode) {
-                            case 'youtube':
-                                this.fetchCaptions(data.video)
-                                    .always(function(response, statusText){
-                                        if (response.status === 200) {
-                                            console.log(arguments);
-                                        } else {
-                                            console.log('No caption!!!');
-                                        }
-                                    });
-                                break;
-                            case 'html5':
+            if (event && event.preventDefault) {
+                event.preventDefault();
+            }
 
-                                // self.openAdditional();
-                                break;
-                        }
+            var entry = $(event.currentTarget).val(),
+                data = Transcripts.Utils.parseLink(entry);
 
-                        console.log(data)
-                };
+            switch (data.mode) {
+                case 'youtube':
+                    this.fetchCaptions(data.video)
+                        .always(function(response, statusText){
+                            if (response.status === 200) {
+                                console.log(arguments);
+                            } else {
+                                console.log('No caption!!!');
+                            }
+                        });
+                    break;
 
-            return _.debounce(checker, 300);
-        }()),
+                case 'html5':
 
+                    this.openAdditional();
+                    break;
+            }
+
+            console.log(data);
+        },
 
         fetchCaptions: function(video_id){
-            var xhr = $.ajax({
+            if (this.xhr && this.xhr.abort) this.xhr.abort();
+
+            this.xhr = $.ajax({
                 url: 'http://video.google.com/timedtext',
                 data: {
                     lang: 'en',
@@ -391,7 +392,7 @@
                 dataType: 'jsonp'
             });
 
-            return xhr;
+            return this.xhr;
         }
     });
 
