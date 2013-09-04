@@ -29,13 +29,20 @@
             var cache = {};
 
             return function(url) {
+                if (typeof url !== "string") {
+                    console.log("Transcripts.Utils.parseYoutubeLink");
+                    console.log("TypeError: Wrong argument type.");
+
+                    return false;
+                }
+
                 if (cache[url]) {
                     return cache[url];
                 }
 
                 var regExp = /.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#\&\?]*).*/;
                 var match = url.match(regExp);
-                cache[url] = (match && match[1].length === 11) ? match[1] : false;
+                cache[url] = (match && match[1].length === 11) ? match[1] : void(0);
 
                 return cache[url];
             };
@@ -45,6 +52,14 @@
             var cache = {};
 
             return function (url) {
+
+                if (typeof url !== "string") {
+                    console.log("Transcripts.Utils.parseHTML5Link");
+                    console.log("TypeError: Wrong argument type.");
+
+                    return false;
+                }
+
                 if (cache[url]) {
                     return cache[url];
                 }
@@ -61,8 +76,8 @@
 
                 if (match) {
                     cache[url] = {
-                        name: match[1],
-                        format: match[2]
+                        video: match[1],
+                        type: match[2]
                     }
                 }
 
@@ -82,17 +97,15 @@
 
             if (_youtubeParser(url)) {
                 result = {
-                    type: 'youtube',
-                    data: _youtubeParser(url)
+                    mode: 'youtube',
+                    video: _youtubeParser(url),
+                    type: 'youtube'
                 };
             } else if (_videoLinkParser(url)) {
-                result = {
-                    type: 'html5',
-                    data: _videoLinkParser(url)
-                };
+                result = $.extend({mode: 'html5'}, _videoLinkParser(url));
             } else {
                 result = {
-                    type: 'incorrect'
+                    mode: 'incorrect'
                 };
             }
 
@@ -143,9 +156,6 @@
             });
         },
 
-        render: function() {
-        },
-
         // Convert metadata JSON to List of models
         toModels: function(data) {
             var metadata = (_.isString(data)) ? JSON.parse(data) : data,
@@ -178,7 +188,7 @@
 
             videoUrl = getField(this.collection,'video_url');
 
-            youtubeValue = (youtubeValue)
+            youtubeValue = (youtubeValue.length === 11)
                                 ? utils.getYoutubeLink(youtubeValue)
                                 : '';
 
@@ -215,17 +225,19 @@
             result = _.groupBy(
                 videoUrlValue,
                 function(value) {
-                    return utils.parseLink(value).type;
+                    return utils.parseLink(value).mode;
                 }
             );
 
+
+            // TODO: CHECK result['html5']
             if (html5Sources) {
                 html5Sources.setValue(result['html5'] || []);
             }
 
             if (youtube) {
                 result = (result['youtube'])
-                            ? utils.parseLink(result['youtube'][0]).data
+                            ? utils.parseLink(result['youtube'][0]).video
                             : '';
 
                 youtube.setValue(result);
@@ -248,10 +260,13 @@
         },
 
         templateName: "metadata-videolist-entry",
+        placeholders: {
+            'webm': '.webm',
+            'mp4': '.mp4',
+            'youtube': 'http://youtube.com/'
+        },
 
         initialize: function() {
-            var self = this;
-
             CMS.Views.Metadata.AbstractEditor.prototype.initialize
                 .apply(this, arguments);
         },
@@ -263,13 +278,15 @@
             ).filter(_.identity);
         },
 
-        // TODO: Think about mehtod of creation
         setValueInEditor: function (value) {
             var list = this.$el.find('.input'),
-                value = value.filter(_.identity);
+                value = value.filter(_.identity),
+                placeholders = this.getPlaceholders(value);
 
             for (var i = 0; i < 3; i += 1) {
-                list.eq(i).val(value[i] || null);
+                list.eq(i)
+                    .val(value[i] || null)
+                    .attr('placeholder', placeholders[i]);
             }
 
             if (value.length > 1) {
@@ -277,6 +294,30 @@
             } else {
                 this.closeAdditional();
             }
+        },
+
+        getPlaceholders: function (value) {
+            var parseLink = Transcripts.Utils.parseLink,
+                placeholders = _.clone(this.placeholders),
+                result = [],
+                label,
+                data;
+
+            for (var i = 0; i < 3; i += 1) {
+                type = parseLink(value[i]).type;
+
+                if (placeholders[type]) {
+                    label = placeholders[type];
+                    delete placeholders[type];
+                } else {
+                    placeholders = _.values(placeholders);
+                    label = placeholders.pop();
+                }
+
+                result.push(label)
+            }
+
+            return result;
         },
 
         openAdditional: function(event) {
@@ -307,35 +348,37 @@
             } else {
                 this.openAdditional.apply(this, arguments);
             }
-
         },
 
         checkValidity: (function(event){
-            var checker = function(event){
-                var entry = $(event.currentTarget).val(),
-                    data = Transcripts.Utils.parseLink(entry);
+            var self = this,
+                checker = function(event){
+                    var entry = $(event.currentTarget).val(),
+                        data = Transcripts.Utils.parseLink(entry);
 
-                    switch (data.type) {
-                        case 'youtube':
-                            this.fetchCaptions(data.data)
-                                .always(function(response, statusText){
-                                    if (response.status === 200) {
-                                       console.log(arguments);
-                                    } else {
-                                        console.log('No caption!!!');
-                                    }
-                                });
-                            break;
-                        case 'html5':
+                        switch (data.mode) {
+                            case 'youtube':
+                                this.fetchCaptions(data.video)
+                                    .always(function(response, statusText){
+                                        if (response.status === 200) {
+                                            console.log(arguments);
+                                        } else {
+                                            console.log('No caption!!!');
+                                        }
+                                    });
+                                break;
+                            case 'html5':
 
-                            break;
-                    }
+                                // self.openAdditional();
+                                break;
+                        }
 
-                    console.log(data)
-            };
+                        console.log(data)
+                };
 
             return _.debounce(checker, 300);
         }()),
+
 
         fetchCaptions: function(video_id){
             var xhr = $.ajax({
