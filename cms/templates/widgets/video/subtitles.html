@@ -62,16 +62,22 @@ Flag for checking HTML5 subtitles availability.
     video_url = metadata_fields['html5_sources']
     youtube_id_1_0 = metadata_fields['youtube_id_1_0']
 
+    def get_youtube_link(video_id):
+      return 'http://youtu.be/{0}'.format(video_id)
+
     video_url.update({
         'help': 'To be sure all students can view the video, we recommend providing alternate versions of the same video: mp4, webm and youtube (if available).',
         'display_name': 'Video URL',
         'field_name': 'video_url',
-        'type': 'VideoList'
+        'type': 'VideoList',
+        'default_value': [
+          get_youtube_link(youtube_id_1_0['default_value'])
+        ]
     })
 
     video_url['value'].insert(\
       0,
-      'http://youtu.be/{0}'.format(youtube_id_1_0['value'])
+      get_youtube_link(youtube_id_1_0['value'])
     )
 
     metadata = {

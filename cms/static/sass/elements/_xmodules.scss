@@ -13,3 +13,31 @@
     }
   }
 }
+
+.xmodule_VideoDescriptor {
+    .wrapper-comp-settings.basic_metadata_edit{
+        .list-input.settings-list {
+            .field.comp-setting-entry {
+                .setting-help{
+                    display: block;
+                    width: 45%;
+                    max-width: auto;
+                    margin-left: 33%;
+                    padding: 0 13px;
+                }
+
+                .videolist-additional-tip.setting-help{
+                    margin-left: 0;
+                    width: 100%;
+                    padding: 0 10px 10px;
+                }
+
+                .wrapper-comp-setting{
+                    width: 100%;
+                    display: block;
+                    max-width: auto;
+                }
+            }
+        }
+    }
+}

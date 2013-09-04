@@ -851,7 +851,6 @@ body.course.unit {
 
           .wrapper-videolist-url{
             margin-bottom: ($baseline/2);
-            padding: 0 ($baseline/3);
 
             // inputs
             .input {
@@ -865,8 +864,7 @@ body.course.unit {
             padding: ($baseline/3);
 
             // enumerated fields
-            .videolist-settings {
-              margin: 0;
+            .videolist-additional {
               display: none;
 
               &.is-visible{
