@@ -1,0 +1,10 @@
+<p class="transcripts-error-message is-invisible">
+<%= gettext("Please select a file in .srt format.") %>
+</p>
+<div class="progress-bar">
+  <div class="progress-fill"></div>
+</div>
+<form class="file-chooser" action="/upload_subtitles"
+                          method="post" enctype="multipart/form-data">
+  <input type="file" class="file-input" name="file">
+</form>

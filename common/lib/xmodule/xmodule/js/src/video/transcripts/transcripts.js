@@ -359,7 +359,8 @@
                 event.preventDefault();
             }
 
-            var entry = $(event.currentTarget).val(),
+            var self = this,
+                entry = $(event.currentTarget).val(),
                 data = Transcripts.Utils.parseLink(entry);
 
             switch (data.mode) {
@@ -367,15 +368,20 @@
                     this.fetchCaptions(data.video)
                         .always(function(response, statusText){
                             if (response.status === 200) {
-                                console.log(arguments);
+                                self.messanger.render('found');
                             } else {
-                                console.log('No caption!!!');
+                                self.messanger.render('not_found');
                             }
                         });
                     break;
 
                 case 'html5':
 
+                    if (self.options.transcriptsExist) {
+                        self.messanger.render('found');
+                    } else {
+                        self.messanger.render('not_found');
+                    }
                     this.openAdditional();
                     break;
             }
@@ -406,32 +412,156 @@
         elClass: '.wrapper-transcripts-message',
 
         events: {
-
         },
 
         templates: {
-            found: "#transcripts-found", // on edx
-            not_found: "#transcripts-not-found", // no found on both, type: HTML5, YT (no on yt)
-            on_youtube: "#transcripts-on-youtube", // no found on EDX, mode: YT
-            not_updated: "#transcripts-not-updated", // change source, type: HTML5
-            uploaded:  "#transcripts-uploaded", // when subtitles was uploaded, type: HTML5
-            conflict:  "#transcripts-conflict", // add YT to existing HTML5 with subs, type: YT
+            not_found: '#transcripts-not-found', // 0: no found on both, type: HTML5, YT (no on yt)
+            found: '#transcripts-found', // 1: on edx
+            on_youtube: '#transcripts-on-youtube', // 2: no found on EDX, mode: YT
+            conflict:  '#transcripts-conflict', // 3: add YT to existing HTML5 with subs, type: YT
+            uploaded:  '#transcripts-uploaded', // when subtitles was uploaded, type: HTML5
+            not_updated: '#transcripts-not-updated' // change source, type: HTML5
         },
 
         initialize: function () {
-            console.log('messanger');
+            var container = this.options.container;
+
+            this.fileUploader = new Transcripts.FileUploader({
+                el: container,
+                messanger: this
+            });
+
+            container
+                .on('click', '.setting-upload', this.fileUploader.clickHandler);
         },
 
         render: function (template) {
             var tpl = $(this.templates[template]).text();
 
             if(!tpl) {
-                console.error("Couldn't load Transcripts status template");
+                console.error('Couldn\'t load Transcripts status template');
             }
             this.template = _.template(tpl);
             this.options.container.find(this.elClass).html(this.template());
+            this.fileUploader.render();
         }
+    });
 
+
+    Transcripts.FileUploader = Backbone.View.extend({
+        events: {
+            'change .file-input': 'changeHadler'
+        },
+
+        uploadTpl: '#transcripts-file-upload',
+        initialize: function () {
+            _.bindAll(this);
+
+            this.files = [];
+            this.render();
+        },
+
+        render: function () {
+            var tpl = $(this.uploadTpl).text(),
+                tplContainer = this.$el.find('.transcripts-file-uploader');
+
+            if (tplContainer) {
+                if(!tpl) {
+                    console.error('Couldn\'t load Transcripts File Upload template');
+                }
+                this.template = _.template(tpl);
+
+                tplContainer.html(this.template());
+
+                this.$form = this.$el.find('.file-chooser');
+                this.$input = this.$form.find('.file-input');
+                this.$progress = this.$el.find('.progress-fill');
+                this.$error = this.$el.find('.transcripts-error-message');
+            }
+        },
+
+        upload: function () {
+            if (!this.files.length){
+                return;
+            }
+
+            this.$form.ajaxSubmit({
+                beforeSend: this.xhrResetProgressBar,
+                uploadProgress: this.xhrProgressHandler,
+                complete: this.xhrCompleteHandler
+            });
+        },
+
+        show: function () {
+
+        },
+
+        showHandler: function (event) {
+            event.preventDefault();
+
+            this.show();
+        },
+
+        hide: function () {
+
+        },
+
+        hideHandler: function (event) {
+            event.preventDefault();
+
+            this.hide();
+        },
+
+        clickHandler: function (event) {
+            event.preventDefault();
+
+            this.$input
+                .val(null)
+                .trigger('click');
+        },
+
+        uploadHadler: function (event) {
+            event.preventDefault();
+
+            this.upload();
+        },
+
+        changeHadler: function (event) {
+            event.preventDefault();
+
+            this.files = this.$input.get(0).files;
+            this.upload();
+        },
+
+        xhrResetProgressBar: function () {
+            var percentVal = '0%';
+
+            this.$progress
+                .width(percentVal)
+                .html(percentVal);
+        },
+
+        xhrProgressHandler: function (event, position, total, percentComplete) {
+            var percentVal = percentComplete + '%';
+
+            this.$progress
+                .width(percentVal)
+                .html(percentVal);
+        },
+
+        xhrCompleteHandler: function (xhr) {
+            var resp = JSON.parse(xhr.responseText);
+
+            if (xhr.status === 200 && resp.success) {
+                this.options.messanger.render('uploaded');
+            } else {
+                // if resp.success that means something wrong happens, like
+                // incorrect file type
+
+                this.$error.removeClass('is-invisible');
+                // this.options.messanger.render('not_updated');
+            }
+        }
     });
 
 

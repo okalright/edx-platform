@@ -6,7 +6,7 @@
     </strong>
 </p>
 <div class="wrapper-transcripts-buttons">
-    <button class="action setting-replace" type="button" name="setting-replace" value="<%= gettext("Yes, Replace EdX Timed Transcripts with YouTube Timed TRanscripts") %>" data-tooltip="<%= gettext("es, Replace EdX Timed Transcripts with YouTube Timed TRanscripts") %>">
-        <span><%= gettext("es, Replace EdX Timed Transcripts with YouTube Timed TRanscripts") %></span>
+    <button class="action setting-replace" type="button" name="setting-replace" value="<%= gettext("Yes, Replace EdX Timed Transcripts with YouTube Timed Transcripts") %>" data-tooltip="<%= gettext("es, Replace EdX Timed Transcripts with YouTube Timed Transcripts") %>">
+        <span><%= gettext("es, Replace EdX Timed Transcripts with YouTube Timed Transcripts") %></span>
     </button>
 </div>

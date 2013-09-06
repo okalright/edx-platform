@@ -15,6 +15,10 @@
     <%static:include path="js/transcripts/metadata-list-entry.underscore" />
 </script>
 
+<script id="transcripts-file-upload" type="text/template">
+    <%static:include path="js/transcripts/file-upload.underscore" />
+</script>
+
 <script id="transcripts-found" type="text/template">
     <%static:include path="js/transcripts/messages/transcripts-found.underscore" />
 </script>
@@ -39,14 +43,6 @@
     <%static:include path="js/transcripts/messages/transcripts-on-youtube.underscore" />
 </script>
 
-
-
-<!--
-Flag for checking HTML5 subtitles availability.
-{subtitlesExist: '${has_subs_content}'}
--->
-
-
 <% metadata_fields = copy.deepcopy(editable_metadata_fields) %>
 <%
     display_name = metadata_fields['display_name']
@@ -54,7 +50,10 @@ Flag for checking HTML5 subtitles availability.
     youtube_id_1_0 = metadata_fields['youtube_id_1_0']
 
     def get_youtube_link(video_id):
-      return 'http://youtu.be/{0}'.format(video_id)
+      if video_id:
+        return 'http://youtu.be/{0}'.format(video_id)
+      else:
+        return ''
 
     video_url.update({
         'help': 'To be sure all students can view the video, we recommend providing alternate versions of the same video: mp4, webm and youtube (if available).',
@@ -79,13 +78,13 @@ Flag for checking HTML5 subtitles availability.
 
 <div class="wrapper-comp-settings basic_metadata_edit" data-metadata='${json.dumps(metadata) | h}'></div>
 
-
 <script type="text/javascript">
 
     var transcripts = new Transcripts.Editor({
-            el: $('.component-editor').find('.basic_metadata_edit')
-        })
-        storage = TabsEditingDescriptor.getStorage();
+        el: $('.component-editor').find('.basic_metadata_edit'),
+        transcriptsExist: '${has_subs_content}'
+    });
+    storage = TabsEditingDescriptor.getStorage();
 
     TabsEditingDescriptor.Model.addModelUpdate(
         '${html_id}',

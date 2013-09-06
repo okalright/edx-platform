@@ -39,20 +39,59 @@
                 }
             }
         }
-      .transcripts-status{
-        margin-top: $baseline;
+        .transcripts-status{
+            margin-top: $baseline;
 
-        .wrapper-transcripts-message{
-            width: 60%;
-            display: inline-block;
-            vertical-align: top;
-            min-width: ($baseline*5);
+            .wrapper-transcripts-message{
+                width: 60%;
+                display: inline-block;
+                vertical-align: top;
+                min-width: ($baseline*5);
 
-            .transcripts-message{
-                @include font-size(12);
-                font-color: $gray-l6;
+                .transcripts-message{
+                    @include font-size(12);
+                }
+
+                .transcripts-error-message{
+                    background: $red;
+                    color: $white;
+                    @include font-size(14);
+                    padding: ($baseline/3);
+
+                    &.is-invisible{
+                        display: none;
+                    }
+                }
             }
         }
-      }
+    }
+    .file-chooser{
+        display: none;
+    }
+
+    .progress-bar{
+        display: block;
+        height: 50px;
+        margin: 30px auto 10px;
+        border: 1px solid $blue;
+        text-align: center;
+        font-size: 1.14em;
+
+        &.loaded {
+            border-color: #66b93d;
+
+            .progress-fill {
+                background: #66b93d;
+            }
+        }
+
+        .progress-fill {
+            display: block;
+            width: 0%;
+            height: 50px;
+            background: $blue;
+            color: #fff;
+            line-height: 48px;
+        }
     }
 }
