@@ -259,18 +259,22 @@
         templateName: 'metadata-videolist-entry',
         placeholders: {
             'webm': '.webm',
-            'mp4': '.mp4',
+            'mp4': 'http://somesite.com/video.mp4',
             'youtube': 'http://youtube.com/'
         },
 
         initialize: function() {
+            CMS.Views.Metadata.AbstractEditor.prototype.initialize
+                .apply(this, arguments);
+
             this.$el.on(
                 'input', 'input',
                 _.debounce(_.bind(this.checkValidity, this), 300)
             );
 
-            CMS.Views.Metadata.AbstractEditor.prototype.initialize
-                .apply(this, arguments);
+            this.messanger = new Transcripts.MessageManager({
+                container: this.$el
+            });
         },
 
         getValueFromEditor: function () {
@@ -395,5 +399,40 @@
             return this.xhr;
         }
     });
+
+
+    Transcripts.MessageManager = Backbone.View.extend({
+        tagName: 'div',
+        elClass: '.wrapper-transcripts-message',
+
+        events: {
+
+        },
+
+        templates: {
+            found: "#transcripts-found", // on edx
+            not_found: "#transcripts-not-found", // no found on both, type: HTML5, YT (no on yt)
+            on_youtube: "#transcripts-on-youtube", // no found on EDX, mode: YT
+            not_updated: "#transcripts-not-updated", // change source, type: HTML5
+            uploaded:  "#transcripts-uploaded", // when subtitles was uploaded, type: HTML5
+            conflict:  "#transcripts-conflict", // add YT to existing HTML5 with subs, type: YT
+        },
+
+        initialize: function () {
+            console.log('messanger');
+        },
+
+        render: function (template) {
+            var tpl = $(this.templates[template]).text();
+
+            if(!tpl) {
+                console.error("Couldn't load Transcripts status template");
+            }
+            this.template = _.template(tpl);
+            this.options.container.find(this.elClass).html(this.template());
+        }
+
+    });
+
 
 }(this));

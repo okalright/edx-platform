@@ -39,5 +39,20 @@
                 }
             }
         }
+      .transcripts-status{
+        margin-top: $baseline;
+
+        .wrapper-transcripts-message{
+            width: 60%;
+            display: inline-block;
+            vertical-align: top;
+            min-width: ($baseline*5);
+
+            .transcripts-message{
+                @include font-size(12);
+                font-color: $gray-l6;
+            }
+        }
+      }
     }
 }

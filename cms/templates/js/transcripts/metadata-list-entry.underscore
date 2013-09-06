@@ -1,7 +1,7 @@
 <div class="wrapper-comp-setting metadata-videolist-enum">
   <label class="label setting-label" for="<%= uniqueId %>"><%= model.get('display_name')%></label>
   <div id="<%= uniqueId %>" class="wrapper-videolist-settings">
-    <div class="wrapper-videolist-url"><input type="text" class="input" value="<%= model.get('value')[0] %>"></div>
+    <div class="wrapper-videolist-url"><input type="text" id="<%= uniqueId %>"  class="input" value="<%= model.get('value')[0] %>"></div>
     <div class="wrapper-videolist-urls">
       <a href="#" class="collapse-action collapse-setting">
         <i class="icon-plus"></i><%= gettext("Add more video sources") %> <span class="sr"><%= model.get('display_name')%></span>
@@ -23,4 +23,10 @@
     <i class="icon-undo"></i>
     <span class="sr">"<%= gettext("Clear Value") %>"</span>
   </button>
+</div>
+<div class="wrapper-comp-setting transcripts-status">
+  <div class="wrapper-comp-setting">
+      <label class="label setting-label transcripts-label"><%= gettext("Timed Transcripts") %></label>
+      <div class="wrapper-transcripts-message"></div>
+  </div>
 </div>
