@@ -365,39 +365,31 @@
                 entry = $(event.currentTarget).val(),
                 data = Transcripts.Utils.parseLink(entry);
 
-            switch (data.mode) {
-                case 'youtube':
-                    this.fetchCaptions(data.video)
-                        .always(function(response, statusText){
-                            if (response.status === 200) {
-                                self.messanger.render('found');
-                            } else {
-                                self.messanger.render('not_found');
-                            }
-                        });
-                    break;
+            if (data.mode === 'incorrect') {
+                console.log('Error: Valiadtion failed.');
+                self.messanger.render('not_found');
+            }
 
-                case 'html5':
-
-                    if (self.options.transcriptsExist) {
+            this.fetchCaptions(data)
+                .always(function(response, statusText){
+                    if (response.status === 200) {
                         self.messanger.render('found');
                     } else {
                         self.messanger.render('not_found');
                     }
-                    this.openAdditional();
-                    break;
-            }
+                });
 
             console.log(data);
         },
 
-        fetchCaptions: function(video_id){
+        fetchCaptions: function(data){
             var data = $.extend({id: this.location_id}, data);
 
             if (this.xhr && this.xhr.abort) this.xhr.abort();
             this.xhr = $.ajax({
                 url: '/check_subtitles',
-                data: data
+                data: data,
+                type: 'post'
             });
 
             return this.xhr;
