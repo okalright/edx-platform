@@ -380,14 +380,13 @@ def check_subtitles(request):
         log.error('Subtitles are supported only for "video" modules.')
         return JsonResponse(subtitles_presence)
 
-    subtitles_presence['status'] = 'Good'
+    subtitles_presence['status'] = 'Success'
 
     # Check for youtube local subtitles presense
+    # we are interested for subtitles for 1.0 speed,
+    # as other speeds are updated from save.
     speed_subs = {
-        0.75: item.youtube_id_0_75,
         1: item.youtube_id_1_0,
-        1.25: item.youtube_id_1_25,
-        1.5: item.youtube_id_1_5
     }
 
     for speed, sub in speed_subs.items():
