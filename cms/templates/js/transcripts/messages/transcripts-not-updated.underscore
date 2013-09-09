@@ -1,4 +1,4 @@
-<div class="transcripts-message-status"><%= gettext("Timed Transcripts Not Updated") %></div>
+<div class="transcripts-message-status status-error"><%= gettext("Timed Transcripts Not Updated") %></div>
 <p class="transcripts-message">
 <%= gettext("You changed a video source, but did not update the timed transcripts file. Do youwant to upload new timed transcripts?") %>
 </p>

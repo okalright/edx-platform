@@ -52,6 +52,16 @@
                     @include font-size(12);
                 }
 
+
+                .transcripts-message-status{
+                    color: $green;
+                    font-weight: 700;
+
+                    &.status-error{
+                        color: $red;
+                    }
+                }
+
                 .transcripts-error-message{
                     background: $red;
                     color: $white;
@@ -71,11 +81,15 @@
 
     .progress-bar{
         display: block;
-        height: 50px;
-        margin: 30px auto 10px;
+        height: 30px;
+        margin: 10px 0;
         border: 1px solid $blue;
         text-align: center;
         font-size: 1.14em;
+
+        &.is-invisible {
+            display: none;
+        }
 
         &.loaded {
             border-color: #66b93d;
@@ -88,10 +102,10 @@
         .progress-fill {
             display: block;
             width: 0%;
-            height: 50px;
+            height: 30px;
             background: $blue;
             color: #fff;
-            line-height: 48px;
+            line-height: 28px;
         }
     }
 }

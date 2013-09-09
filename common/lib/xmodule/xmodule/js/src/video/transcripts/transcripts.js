@@ -267,6 +267,8 @@
             CMS.Views.Metadata.AbstractEditor.prototype.initialize
                 .apply(this, arguments);
 
+            this.location_id = this.$el.closest('.component').data('id');
+
             this.$el.on(
                 'input', 'input',
                 _.debounce(_.bind(this.checkValidity, this), 300)
@@ -390,16 +392,12 @@
         },
 
         fetchCaptions: function(video_id){
-            if (this.xhr && this.xhr.abort) this.xhr.abort();
+            var data = $.extend({id: this.location_id}, data);
 
+            if (this.xhr && this.xhr.abort) this.xhr.abort();
             this.xhr = $.ajax({
-                url: 'http://video.google.com/timedtext',
-                data: {
-                    lang: 'en',
-                    v: video_id
-                },
-                timeout: 1500,
-                dataType: 'jsonp'
+                url: '/check_subtitles',
+                data: data
             });
 
             return this.xhr;
@@ -430,9 +428,6 @@
                 el: container,
                 messanger: this
             });
-
-            container
-                .on('click', '.setting-upload', this.fileUploader.clickHandler);
         },
 
         render: function (template) {
@@ -449,15 +444,24 @@
 
 
     Transcripts.FileUploader = Backbone.View.extend({
+        invisibleClass: 'is-invisible',
+        validFileExtensions: ['srt'],
+
+        ERRORS: {
+            'file-type': 'Please select a file in .srt format.'
+        },
+
         events: {
-            'change .file-input': 'changeHadler'
+            'change .file-input': 'changeHadler',
+            'click .setting-upload': 'clickHandler'
         },
 
         uploadTpl: '#transcripts-file-upload',
         initialize: function () {
             _.bindAll(this);
 
-            this.files = [];
+            this.component_id = this.$el.closest('.component').data('id');
+            this.file = false;
             this.render();
         },
 
@@ -471,8 +475,12 @@
                 }
                 this.template = _.template(tpl);
 
-                tplContainer.html(this.template());
+                tplContainer.html(this.template({
+                    ext: this.validFileExtensions,
+                    component_id: this.component_id
+                }));
 
+                this.$statusBar = this.$el.find('.transcripts-message-status');
                 this.$form = this.$el.find('.file-chooser');
                 this.$input = this.$form.find('.file-input');
                 this.$progress = this.$el.find('.progress-fill');
@@ -481,7 +489,7 @@
         },
 
         upload: function () {
-            if (!this.files.length){
+            if (!this.file){
                 return;
             }
 
@@ -492,24 +500,19 @@
             });
         },
 
-        show: function () {
+        showError: function (error, customError) {
+            var err = (customError) ? error : this.ERRORS[error];
 
+            if (err) {
+                this.$error
+                    .html(gettext(err))
+                    .removeClass(this.invisibleClass);
+            }
         },
 
-        showHandler: function (event) {
-            event.preventDefault();
-
-            this.show();
-        },
-
-        hide: function () {
-
-        },
-
-        hideHandler: function (event) {
-            event.preventDefault();
-
-            this.hide();
+        hideError: function () {
+            this.$error
+                .addClass(this.invisibleClass);
         },
 
         clickHandler: function (event) {
@@ -529,8 +532,27 @@
         changeHadler: function (event) {
             event.preventDefault();
 
-            this.files = this.$input.get(0).files;
-            this.upload();
+            this.hideError();
+            this.file = this.$input.get(0).files[0];
+
+            if (this.checkExtValidity(this.file)) {
+                this.upload();
+            } else {
+                this.showError('file-type');
+            }
+        },
+
+        checkExtValidity: function (file) {
+            var fileExtension = file.name
+                                    .split('.')
+                                    .pop()
+                                    .toLowerCase();
+
+            if ($.inArray(fileExtension, this.validFileExtensions) !== -1) {
+                return true;
+            }
+
+            return false;
         },
 
         xhrResetProgressBar: function () {
@@ -538,7 +560,8 @@
 
             this.$progress
                 .width(percentVal)
-                .html(percentVal);
+                .html(percentVal)
+                .removeClass(this.invisibleClass);
         },
 
         xhrProgressHandler: function (event, position, total, percentComplete) {
@@ -552,14 +575,17 @@
         xhrCompleteHandler: function (xhr) {
             var resp = JSON.parse(xhr.responseText);
 
+            this.$progress
+                .addClass(this.invisibleClass);
+
             if (xhr.status === 200 && resp.success) {
                 this.options.messanger.render('uploaded');
             } else {
-                // if resp.success that means something wrong happens, like
-                // incorrect file type
-
-                this.$error.removeClass('is-invisible');
-                // this.options.messanger.render('not_updated');
+                // TODO Retrieve error form server
+                console.log('Error: Uploading failed.');
+                if (resp.error) {
+                    this.showError(resp.error, true);
+                }
             }
         }
     });

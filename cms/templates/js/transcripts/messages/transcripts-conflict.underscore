@@ -1,4 +1,4 @@
-<div class="transcripts-message-status"><%= gettext("Timed Transcripts Conflict") %></div>
+<div class="transcripts-message-status status-error"><%= gettext("Timed Transcripts Conflict") %></div>
 <p class="transcripts-message">
 <%= gettext("The timed transcripts file on YouTube does not appear to be the same as the timed transcripts fule on edX.") %>
     <strong>
