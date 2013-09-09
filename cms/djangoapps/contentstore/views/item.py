@@ -23,7 +23,7 @@ from xmodule.exceptions import NotFoundError
 from util.json_request import expect_json, JsonResponse
 from ..utils import (get_modulestore, manage_video_subtitles,
                      return_ajax_status, generate_subs_from_source,
-                     generate_srt_from_sjson)
+                     generate_srt_from_sjson, requests as rqsts)
 from .access import has_access
 from .requests import _xmodule_recurse
 from xmodule.x_module import XModuleDescriptor
@@ -350,32 +350,39 @@ def download_subtitles(request):
 
 
 @login_required
-@return_ajax_status
 def check_subtitles(request):
     """Check subtitles availability for current modules."""
+    subtitles_presence = {
+        'html5_local': False,
+        'youtube_local': False,
+        'youtube_server': False,
+        'status': 'Error'
+    }
 
-    # This view return True/False, cause we use `return_ajax_status`
-    # view decorator.
+    video_id = request.POST.get('video_id')
+    if not video_id:
+        log.error('Incoming data without "video_id" property.')
+        return JsonResponse(subtitles_presence)
 
-    item_location = request.GET.get('id')
-    if not item_location:
-        log.error('GET data without "id" property.')
-        return False
-
+    html_id = 'i4x-blades-1-video-0e8733e7fa084068aeb53bd2320f9663'
+    item_location = Location(html_id.split('-'))
     try:
         item = modulestore().get_item(item_location)
     except (ItemNotFoundError, InvalidLocationError):
         log.error("Can't find item by location.")
-        return False
+        return JsonResponse(subtitles_presence)
 
     # Check permissions for this user within this course.
     if not has_access(request.user, item_location):
         raise PermissionDenied()
 
     if item.category != 'video':
-        log.error('Subtitles are supported only for video" modules.')
-        return False
+        log.error('Subtitles are supported only for "video" modules.')
+        return JsonResponse(subtitles_presence)
 
+    subtitles_presence['status'] = 'Good'
+
+    # Check for youtube local subtitles presense
     speed_subs = {
         0.75: item.youtube_id_0_75,
         1: item.youtube_id_1_0,
@@ -383,20 +390,40 @@ def check_subtitles(request):
         1.5: item.youtube_id_1_5
     }
 
-    if any(speed_subs.values()):
-        log.error("We don't support downloading subs for Youtube video modules.")
-        return False
-    elif item.sub:
+    for speed, sub in speed_subs.items():
+        if not sub:
+            continue
+        filename = 'subs_{0}.srt.sjson'.format(sub)
+        content_location = StaticContent.compute_location(
+            item.location.org, item.location.course, filename)
+        try:
+            contentstore().find(content_location)
+            subtitles_presence['youtube_local'] = True
+        except NotFoundError:
+            log.error("Can't find subtitles in storage for youtube speed: {} and video_id: {}".format(speed, sub))
+
+    # Check for youtube server subtitles presence
+    for speed, youtube_id in sorted(speed_subs.iteritems()):
+        if not youtube_id:
+            continue
+        data = rqsts.get(
+            "http://video.google.com/timedtext",
+            params={'lang': 'en', 'v': youtube_id}
+        )
+
+        if data.status_code == 200 and data.text:
+            subtitles_presence['youtube_server'] = True
+            break
+
+    # Check for html5 local subtitles presence
+    if item.sub:
         filename = 'subs_{0}.srt.sjson'.format(item.sub)
         content_location = StaticContent.compute_location(
             item.location.org, item.location.course, filename)
         try:
             contentstore().find(content_location)
+            subtitles_presence['edx'] = True
         except NotFoundError:
-            log.error("Can't find content in storage for non-youtube sub.")
-            return False
-    else:
-        log.error('Blank "sub" field.')
-        return False
+            log.error("Can't find subtitles in storage for non-youtube video_id: {}".format(video_id))
 
-    return True
+    return JsonResponse(subtitles_presence)
