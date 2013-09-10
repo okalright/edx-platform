@@ -252,7 +252,6 @@
         events : {
             'click .setting-clear' : 'clear',
             'keypress .setting-input' : 'showClearButton',
-            'change input' : 'updateModel',
             'click .collapse-setting' : 'toggleAdditional'
         },
 
@@ -271,7 +270,7 @@
 
             this.$el.on(
                 'input', 'input',
-                _.debounce(_.bind(this.checkValidity, this), 300)
+                _.debounce(_.bind(this.inputHandler, this), 300)
             );
 
             this.messanger = new Transcripts.MessageManager({
@@ -288,7 +287,8 @@
         },
 
         setValueInEditor: function (value) {
-            var list = this.$el.find('.input'),
+            var parseLink = Transcripts.Utils.parseLink,
+                list = this.$el.find('.input'),
                 val = value.filter(_.identity),
                 placeholders = this.getPlaceholders(val);
 
@@ -298,7 +298,7 @@
                     .attr('placeholder', placeholders[i]);
             }
 
-            if (value.length > 1) {
+            if (val.length > 1 || parseLink(val[0]).mode === 'html5') {
                 this.openAdditional();
             } else {
                 this.closeAdditional();
@@ -356,22 +356,32 @@
             }
         },
 
-        checkValidity: function(event){
-
+        inputHandler: function (event) {
             if (event && event.preventDefault) {
                 event.preventDefault();
             }
 
-            var self = this,
-                entry = $(event.currentTarget).val(),
-                data = Transcripts.Utils.parseLink(entry);
+            var entry = $(event.currentTarget).val(),
+                data = Transcripts.Utils.parseLink(entry),
+                $el = $(event.currentTarget);
+
+            if (this.checkValidity(data)) {
+                this.updateModel();
+            } else if ($el.hasClass('videolist-url')){
+                this.closeAdditional();
+            };
+        },
+
+        checkValidity: function(data){
+
+            var self = this
 
             if (data.mode === 'incorrect') {
-                self.messanger
+                this.messanger
                     .render('not_found')
                     .showError('Incorrect url format.', true);
 
-                return;
+                return false;
             }
 
             this.fetchCaptions(data)
@@ -384,6 +394,7 @@
                 });
 
             console.log(data);
+            return true;
         },
 
         fetchCaptions: function(data){
