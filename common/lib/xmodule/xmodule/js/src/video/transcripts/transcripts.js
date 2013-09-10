@@ -275,7 +275,7 @@
             );
 
             this.messanger = new Transcripts.MessageManager({
-                container: this.$el
+                el: this.$el.find('.transcripts-status')
             });
         },
 
@@ -368,6 +368,8 @@
             if (data.mode === 'incorrect') {
                 console.log('Error: Valiadtion failed.');
                 self.messanger.render('not_found');
+
+                return;
             }
 
             this.fetchCaptions(data)
@@ -417,7 +419,7 @@
             var container = this.options.container;
 
             this.fileUploader = new Transcripts.FileUploader({
-                el: container,
+                el: this.$el,
                 messanger: this
             });
         },
@@ -429,7 +431,8 @@
                 console.error('Couldn\'t load Transcripts status template');
             }
             this.template = _.template(tpl);
-            this.options.container.find(this.elClass).html(this.template());
+            this.$el.removeClass('is-invisible');
+            this.$el.find(this.elClass).html(this.template());
             this.fileUploader.render();
         }
     });
@@ -565,7 +568,8 @@
         },
 
         xhrCompleteHandler: function (xhr) {
-            var resp = JSON.parse(xhr.responseText);
+            var resp = JSON.parse(xhr.responseText),
+                err = (resp.error) ? resp.error : 'Error: Uploading failed.';
 
             this.$progress
                 .addClass(this.invisibleClass);
@@ -574,10 +578,7 @@
                 this.options.messanger.render('uploaded');
             } else {
                 // TODO Retrieve error form server
-                console.log('Error: Uploading failed.');
-                if (resp.error) {
-                    this.showError(resp.error, true);
-                }
+                this.showError(err, true);
             }
         }
     });
