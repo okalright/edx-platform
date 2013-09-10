@@ -56,7 +56,6 @@
                     @include font-size(12);
                 }
 
-
                 .transcripts-message-status{
                     color: $green;
                     font-weight: 700;
@@ -81,6 +80,19 @@
                     &.is-invisible{
                         display: none;
                     }
+                }
+            }
+            .action{
+                @include white-button;
+                margin-bottom: $baseline/2;
+                @extend .t-action3;
+
+                &.is-disabled,
+                &[disabled="disabled"]{
+                    box-shadow: none !important;
+                    cursor: default !important;
+                    background: $mediumGrey !important;
+                    border: $mediumGrey !important;
                 }
             }
         }
