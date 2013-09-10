@@ -1,4 +1,4 @@
-<div class="transcripts-message-status"><%= gettext("No Timed Transcripts") %></div>
+<div class="transcripts-message-status"><i class="icon-ok"></i><%= gettext("No Timed Transcripts") %></div>
 <p class="transcripts-message">
 <%= gettext("We don\'t have a timed transcripts for this video on edX, but we found timet transcripts for this video on YouTube. Would you like to import them to edX?") %>
 </p>
