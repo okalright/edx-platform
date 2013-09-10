@@ -5,6 +5,9 @@
     <%= gettext("Would you like to replace the edX timed transcripts with the ones from YouTube?") %>
     </strong>
 </p>
+<p class="transcripts-error-message is-invisible">
+<%= gettext("Error.") %>
+</p>
 <div class="wrapper-transcripts-buttons">
     <button class="action setting-replace" type="button" name="setting-replace" value="<%= gettext("Yes, Replace EdX Timed Transcripts with YouTube Timed Transcripts") %>" data-tooltip="<%= gettext("es, Replace EdX Timed Transcripts with YouTube Timed Transcripts") %>">
         <span><%= gettext("es, Replace EdX Timed Transcripts with YouTube Timed Transcripts") %></span>

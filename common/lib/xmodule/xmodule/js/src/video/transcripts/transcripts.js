@@ -367,8 +367,9 @@
                 data = Transcripts.Utils.parseLink(entry);
 
             if (data.mode === 'incorrect') {
-                console.log('Error: Valiadtion failed.');
-                self.messanger.render('not_found');
+                self.messanger
+                    .render('not_found')
+                    .showError('Incorrect url format.', true);
 
                 return;
             }
@@ -403,9 +404,7 @@
     Transcripts.MessageManager = Backbone.View.extend({
         tagName: 'div',
         elClass: '.wrapper-transcripts-message',
-
-        events: {
-        },
+        invisibleClass: 'is-invisible',
 
         templates: {
             not_found: '#transcripts-not-found', // 0: no found on both, type: HTML5, YT (no on yt)
@@ -434,21 +433,46 @@
             this.$el
                 .removeClass('is-invisible')
                 .find(this.elClass).html(this.template({
-                    component_id: _.escape(this.options.component_id)
+                    component_id: encodeURIComponent(this.options.component_id)
                 }));
 
             this.fileUploader.render();
+
+            return this;
+        },
+
+        showError: function (err, hideButtons) {
+            var $error = this.$el.find('.transcripts-error-message');
+
+            if (err) {
+                // Hide any other error messages.
+                this.hideError();
+
+                $error
+                    .html(gettext(err))
+                    .removeClass(this.invisibleClass);
+
+                if (hideButtons) {
+                    this.$el.find('.wrapper-transcripts-buttons')
+                        .addClass(this.invisibleClass);
+                }
+            }
+        },
+
+        hideError: function () {
+            this.$el.find('.transcripts-error-message')
+                .addClass(this.invisibleClass);
+
+            this.$el.find('.wrapper-transcripts-buttons')
+                .removeClass(this.invisibleClass);
         }
+
     });
 
 
     Transcripts.FileUploader = Backbone.View.extend({
         invisibleClass: 'is-invisible',
         validFileExtensions: ['srt'],
-
-        ERRORS: {
-            'file-type': 'Please select a file in .srt format.'
-        },
 
         events: {
             'change .file-input': 'changeHadler',
@@ -482,7 +506,6 @@
                 this.$form = this.$el.find('.file-chooser');
                 this.$input = this.$form.find('.file-input');
                 this.$progress = this.$el.find('.progress-fill');
-                this.$error = this.$el.find('.transcripts-error-message');
             }
         },
 
@@ -496,21 +519,6 @@
                 uploadProgress: this.xhrProgressHandler,
                 complete: this.xhrCompleteHandler
             });
-        },
-
-        showError: function (error, customError) {
-            var err = (customError) ? error : this.ERRORS[error];
-
-            if (err) {
-                this.$error
-                    .html(gettext(err))
-                    .removeClass(this.invisibleClass);
-            }
-        },
-
-        hideError: function () {
-            this.$error
-                .addClass(this.invisibleClass);
         },
 
         clickHandler: function (event) {
@@ -530,13 +538,14 @@
         changeHadler: function (event) {
             event.preventDefault();
 
-            this.hideError();
+            this.options.messanger.hideError();
             this.file = this.$input.get(0).files[0];
 
             if (this.checkExtValidity(this.file)) {
                 this.upload();
             } else {
-                this.showError('file-type');
+                this.options.messanger
+                    .showError('Please select a file in .srt format.');
             }
         },
 
@@ -572,7 +581,7 @@
 
         xhrCompleteHandler: function (xhr) {
             var resp = JSON.parse(xhr.responseText),
-                err = (resp.error) ? resp.error : 'Error: Uploading failed.';
+                err = (resp.error) ? resp.error : 'Uploading failed.';
 
             this.$progress
                 .addClass(this.invisibleClass);
@@ -581,7 +590,7 @@
                 this.options.messanger.render('uploaded');
             } else {
                 // TODO Retrieve error form server
-                this.showError(err, true);
+                this.options.messanger.showError(err);
             }
         }
     });

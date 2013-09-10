@@ -1,6 +1,3 @@
-<p class="transcripts-error-message is-invisible">
-<%= gettext("Error.") %>
-</p>
 <div class="progress-bar is-invisible">
   <div class="progress-fill"></div>
 </div>

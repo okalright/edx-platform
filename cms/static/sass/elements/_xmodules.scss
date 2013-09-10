@@ -81,6 +81,13 @@
                         display: none;
                     }
                 }
+
+                .wrapper-transcripts-buttons{
+
+                    &.is-invisible{
+                        display: none;
+                    }
+                }
             }
             .action{
                 @include white-button;
