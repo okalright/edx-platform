@@ -1,5 +1,6 @@
 """Tests for items views."""
 
+import os
 import json
 import datetime
 from pytz import UTC
@@ -26,7 +27,7 @@ class DeleteItem(CourseTestCase):
     """Tests for '/delete_item' url."""
     def setUp(self):
         """ Creates the test course with a static page in it. """
-        super(TestDeleteItem, self).setUp()
+        super(DeleteItem, self).setUp()
         self.course = CourseFactory.create(org='mitX', number='333', display_name='Dummy Course')
 
     def test_delete_static_page(self):
@@ -843,10 +844,17 @@ class TestCheckSubtitles(BaseSubtitles):
         }
         self.save_subs_to_store(subs, subs_id)
 
-        resp = self.client.get(
-            reverse('check_subtitles'), {'id': self.item_location})
+        resp = self.client.post(
+            reverse('check_subtitles'), {
+                'id': self.item_location,
+                'video_id': subs_id
+            }
+        )
         self.assertEqual(resp.status_code, 200)
-        self.assertTrue(json.loads(resp.content).get('success'))
+        self.assertDictEqual(
+            json.loads(resp.content),
+            {u'status': u'Success', u'youtube_server': False, u'html5_local': True, u'youtube_local': False}
+        )
 
         utils.remove_subs_from_store(subs_id, self.item)
 

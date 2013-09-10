@@ -358,14 +358,13 @@ def check_subtitles(request):
         'youtube_server': False,
         'status': 'Error'
     }
-
+    # import ipdb; ipdb.set_trace()
     video_id = request.POST.get('video_id')
     if not video_id:
         log.error('Incoming data without "video_id" property.')
         return JsonResponse(subtitles_presence)
 
-    html_id = 'i4x-blades-1-video-0e8733e7fa084068aeb53bd2320f9663'
-    item_location = Location(html_id.split('-'))
+    item_location = request.POST.get('id')
     try:
         item = modulestore().get_item(item_location)
     except (ItemNotFoundError, InvalidLocationError):
@@ -383,46 +382,31 @@ def check_subtitles(request):
     subtitles_presence['status'] = 'Success'
 
     # Check for youtube local subtitles presense
-    # we are interested for subtitles for 1.0 speed,
-    # as other speeds are updated from save.
-    speed_subs = {
-        1: item.youtube_id_1_0,
-    }
-
-    for speed, sub in speed_subs.items():
-        if not sub:
-            continue
-        filename = 'subs_{0}.srt.sjson'.format(sub)
-        content_location = StaticContent.compute_location(
-            item.location.org, item.location.course, filename)
-        try:
-            contentstore().find(content_location)
-            subtitles_presence['youtube_local'] = True
-        except NotFoundError:
-            log.error("Can't find subtitles in storage for youtube speed: {} and video_id: {}".format(speed, sub))
+    filename = 'subs_{0}.srt.sjson'.format(video_id)
+    content_location = StaticContent.compute_location(
+        item.location.org, item.location.course, filename)
+    try:
+        contentstore().find(content_location)
+        subtitles_presence['youtube_local'] = True
+    except NotFoundError:
+        log.error("Can't find subtitles in storage for youtube id: {}".format(video_id))
 
     # Check for youtube server subtitles presence
-    for speed, youtube_id in sorted(speed_subs.iteritems()):
-        if not youtube_id:
-            continue
-        data = rqsts.get(
-            "http://video.google.com/timedtext",
-            params={'lang': 'en', 'v': youtube_id}
-        )
-
-        if data.status_code == 200 and data.text:
-            subtitles_presence['youtube_server'] = True
-            break
+    data = rqsts.get(
+        "http://video.google.com/timedtext",
+        params={'lang': 'en', 'v': video_id}
+    )
+    if data.status_code == 200 and data.text:
+        subtitles_presence['youtube_server'] = True
 
     # Check for html5 local subtitles presence
-    if item.sub:
-        filename = 'subs_{0}.srt.sjson'.format(item.sub)
-        content_location = StaticContent.compute_location(
-            item.location.org, item.location.course, filename)
-        try:
-            contentstore().find(content_location)
-            subtitles_presence['edx'] = True
-        except NotFoundError:
-            log.error("Can't find subtitles in storage for non-youtube video_id: {}".format(video_id))
+    filename = 'subs_{0}.srt.sjson'.format(video_id)
+    content_location = StaticContent.compute_location(
+        item.location.org, item.location.course, filename)
+    try:
+        contentstore().find(content_location)
+        subtitles_presence['html5_local'] = True
+    except NotFoundError:
+        log.error("Can't find subtitles in storage for non-youtube video_id: {}".format(video_id))
 
     return JsonResponse(subtitles_presence)
