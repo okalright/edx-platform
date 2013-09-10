@@ -267,7 +267,7 @@
             CMS.Views.Metadata.AbstractEditor.prototype.initialize
                 .apply(this, arguments);
 
-            this.location_id = this.$el.closest('.component').data('id');
+            this.component_id = this.$el.closest('.component').data('id');
 
             this.$el.on(
                 'input', 'input',
@@ -275,7 +275,8 @@
             );
 
             this.messanger = new Transcripts.MessageManager({
-                el: this.$el.find('.transcripts-status')
+                el: this.$el.find('.transcripts-status'),
+                component_id: this.component_id
             });
         },
 
@@ -416,11 +417,10 @@
         },
 
         initialize: function () {
-            var container = this.options.container;
-
             this.fileUploader = new Transcripts.FileUploader({
                 el: this.$el,
-                messanger: this
+                messanger: this,
+                component_id: this.options.component_id
             });
         },
 
@@ -431,8 +431,12 @@
                 console.error('Couldn\'t load Transcripts status template');
             }
             this.template = _.template(tpl);
-            this.$el.removeClass('is-invisible');
-            this.$el.find(this.elClass).html(this.template());
+            this.$el
+                .removeClass('is-invisible')
+                .find(this.elClass).html(this.template({
+                    component_id: _.escape(this.options.component_id)
+                }));
+
             this.fileUploader.render();
         }
     });
@@ -455,7 +459,6 @@
         initialize: function () {
             _.bindAll(this);
 
-            this.component_id = this.$el.closest('.component').data('id');
             this.file = false;
             this.render();
         },
@@ -472,7 +475,7 @@
 
                 tplContainer.html(this.template({
                     ext: this.validFileExtensions,
-                    component_id: this.component_id
+                    component_id: this.options.component_id
                 }));
 
                 this.$statusBar = this.$el.find('.transcripts-message-status');
