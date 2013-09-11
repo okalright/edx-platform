@@ -50,9 +50,11 @@
 
             videoUrl = getField(this.collection, 'video_url');
 
-            youtubeValue = (youtubeValue.length === 11)
-                                ? utils.getYoutubeLink(youtubeValue)
-                                : '';
+            if (youtubeValue.length === 11) {
+                youtubeValue = utils.getYoutubeLink(youtubeValue);
+            } else {
+                youtubeValue = '';
+            }
 
             result.push(youtubeValue);
             result = result.concat(html5SourcesValue);
@@ -98,9 +100,12 @@
             }
 
             if (youtube) {
-                result = (result.youtube)
-                            ? utils.parseLink(result.youtube[0]).video
-                            : '';
+                
+                if (result.youtube) {
+                    result = utils.parseLink(result.youtube[0]).video;                    
+                } else {
+                    result = '';
+                }
 
                 youtube.setValue(result);
             }

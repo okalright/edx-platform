@@ -5,12 +5,13 @@
         invisibleClass: 'is-invisible',
 
         templates: {
-            not_found: '#transcripts-not-found', // 0: no found on both, type: HTML5, YT (no on yt)
-            found: '#transcripts-found', // 1: on edx
-            on_youtube: '#transcripts-on-youtube', // 2: no found on EDX, mode: YT
-            conflict:  '#transcripts-conflict', // 3: add YT to existing HTML5 with subs, type: YT
-            uploaded:  '#transcripts-uploaded', // when subtitles was uploaded, type: HTML5
-            not_updated: '#transcripts-not-updated' // change source, type: HTML5
+            not_found: '#transcripts-not-found',
+            found: '#transcripts-found',
+            import: '#transcripts-import',
+            replace:  '#transcripts-replace',
+            uploaded:  '#transcripts-uploaded',
+            not_updated: '#transcripts-not-updated',
+            choose: '#transcripts-choose' 
         },
 
         initialize: function () {
