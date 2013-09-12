@@ -293,7 +293,8 @@ def upload_transcripts(request):
 
 
 def download_transcripts(request):
-    """Try to download transcripts for current modules."""
+    """Try to download transcripts for current modules.
+    """
 
     item_location = request.GET.get('id')
     if not item_location:
@@ -315,40 +316,43 @@ def download_transcripts(request):
         raise Http404
 
     speed = 1
-    speed_subs = {
-        0.75: item.youtube_id_0_75,
-        1: item.youtube_id_1_0,
-        1.25: item.youtube_id_1_25,
-        1.5: item.youtube_id_1_5
-    }
+    subs_found = {'youtube': False, 'html5': False}
+    # youtube subtitles is higher priority
+    if item.youtube_id_1_0:  # downloading subtitles from youtube speed 1.0
+        filename = 'subs_{0}.srt.sjson'.format(item.youtube_id_1_0)
+        content_location = StaticContent.compute_location(
+            item.location.org, item.location.course, filename)
+        try:
+            sjson_transcripts = contentstore().find(content_location)
+            subs_found['youtube'] = True
+            srt_file_name = item.youtube_id_1_0
+            log.debug("Downloading subs from Youtube ids")
+        except NotFoundError:
+            log.debug("Can't find content in storage for youtube sub.")
 
-    if any(speed_subs.values()):
-        log.error("We don't support downloading subs for Youtube video modules.")
-        raise Http404
-    elif item.sub:
+    if item.sub and not subs_found['youtube']:  # dowloading subtitles from html5
         filename = 'subs_{0}.srt.sjson'.format(item.sub)
         content_location = StaticContent.compute_location(
             item.location.org, item.location.course, filename)
         try:
             sjson_transcripts = contentstore().find(content_location)
+            subs_found['html5'] = True
+            srt_file_name = item.sub
+            log.debug("Downloading subs from html5 subs ")
         except NotFoundError:
             log.error("Can't find content in storage for non-youtube sub.")
+
+    if subs_found['youtube'] or subs_found['html5']:
+        str_subs = generate_srt_from_sjson(json.loads(sjson_transcripts.data), speed)
+        if str_subs is None:
+            log.error('generate_srt_from_sjson produces no subtitles')
             raise Http404
-
-        srt_file_name = item.sub
+        response = HttpResponse(str_subs, content_type='application/x-subrip')
+        response['Content-Disposition'] = 'attachment; filename="{0}.srt"'.format(srt_file_name)
+        return response
     else:
-        log.error('Blank "sub" field.')
+        log.error('No youtube 1.0 or html5 sub transcripts')
         raise Http404
-
-    str_subs = generate_srt_from_sjson(json.loads(sjson_transcripts.data), speed)
-    if str_subs is None:
-        raise Http404
-
-    response = HttpResponse(str_subs, content_type='application/x-subrip')
-    response['Content-Disposition'] = 'attachment; filename="{0}.srt"'.format(
-        srt_file_name)
-
-    return response
 
 
 def check_transcripts(request):
@@ -374,7 +378,7 @@ def check_transcripts(request):
         'html5_local': [],
         'youtube_local': False,
         'youtube_server': False,
-        'youtube_diff': False,
+        'youtube_diff': True,
         'current_item_subs': None,
         'status': 'Error'
     }
@@ -431,7 +435,7 @@ def check_transcripts(request):
                 else:
                     #check transcrips for equality
                     if local_transcripts == server_transcripts:
-                        transcripts_presence['youtube_diff'] = True
+                        transcripts_presence['youtube_diff'] = False
 
     # Check for html5 local transcripts presence
     for html5_id in videos:
@@ -461,6 +465,7 @@ def transcripts_logic(transcripts_presence):
         'youtube_local': False,
         'youtube_server': False,
         'youtube_diff': False,
+        'current_item_subs': None,
         'status': 'Error'
     }
 
@@ -485,8 +490,12 @@ def transcripts_logic(transcripts_presence):
             else:  # len is 2
                 assert len(transcripts_presence['html5_local']) == 2
                 command = 'choose'
-        else:
-            command = 'not_found'
+        else:  # html5 source have no subtitles
+            # check if item sub has subtitles
+            if transcripts_presence['current_item_subs']:
+                command = 'use_existing'
+            else:
+                command = 'not_found'
 
     return command
 
@@ -586,7 +595,7 @@ def process_transcripts(request, action):
     """
     allowed_actions = {
         'upload': upload_transcripts,
-        'donwload': download_transcripts,
+        'download': download_transcripts,
         'check': check_transcripts,
         'choose': choose_transcripts,
         'replace': replace_transcripts
