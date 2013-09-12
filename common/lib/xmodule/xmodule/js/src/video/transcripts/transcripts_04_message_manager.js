@@ -17,7 +17,7 @@
             import: '#transcripts-import',
             replace:  '#transcripts-replace',
             uploaded:  '#transcripts-uploaded',
-            not_updated: '#transcripts-not-updated',
+            use_existing: '#transcripts-use-existing',
             choose: '#transcripts-choose'
         },
 
