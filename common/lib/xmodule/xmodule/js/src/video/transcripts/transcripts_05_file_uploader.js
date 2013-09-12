@@ -67,13 +67,13 @@
         changeHadler: function (event) {
             event.preventDefault();
 
-            this.options.messanger.hideError();
+            this.options.messenger.hideError();
             this.file = this.$input.get(0).files[0];
 
             if (this.checkExtValidity(this.file)) {
                 this.upload();
             } else {
-                this.options.messanger
+                this.options.messenger
                     .showError('Please select a file in .srt format.');
             }
         },
@@ -116,10 +116,10 @@
                 .addClass(this.invisibleClass);
 
             if (xhr.status === 200 && resp.success) {
-                this.options.messanger.render('uploaded');
+                this.options.messenger.render('uploaded');
             } else {
                 // TODO Retrieve error form server
-                this.options.messanger.showError(err);
+                this.options.messenger.showError(err);
             }
         }
     });

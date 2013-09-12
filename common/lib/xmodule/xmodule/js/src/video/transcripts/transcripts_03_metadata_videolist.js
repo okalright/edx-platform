@@ -25,9 +25,10 @@
                 _.debounce(_.bind(this.inputHandler, this), 300)
             );
 
-            this.messanger = new Transcripts.MessageManager({
+            this.messenger = new Transcripts.MessageManager({
                 el: this.$el.find('.transcripts-status'),
-                component_id: this.component_id
+                component_id: this.component_id,
+                parent: this
             });
         },
 
@@ -42,11 +43,11 @@
 
             utils.command('check', component_id, videoList)
                 .done(function (resp) {
-                    self.messanger.render(resp.command);
+                    self.messenger.render(resp.command);
                 })
-                .fail(function (resp) { 
-                    self.messanger.render('not_found');
-                }); 
+                .fail(function (resp) {
+                    self.messenger.render('not_found');
+                });
         },
 
         getValueFromEditor: function () {
@@ -173,14 +174,14 @@
                 videoList = this.getVideoObjectsList();
 
             if (!this.isUniqVideoTypes(videoList)) {
-                this.messanger
+                this.messenger
                     .showError('Link types should be unique.', true);
 
                 return false;
             }
 
             if (data.mode === 'incorrect' && showErrorModeMessage) {
-                this.messanger
+                this.messenger
                     .showError('Incorrect url format.', true);
 
                 return false;

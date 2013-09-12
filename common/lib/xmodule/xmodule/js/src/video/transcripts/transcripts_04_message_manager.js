@@ -24,7 +24,7 @@
         initialize: function () {
             this.fileUploader = new Transcripts.FileUploader({
                 el: this.$el,
-                messanger: this,
+                messenger: this,
                 component_id: this.options.component_id
             });
         },
@@ -73,7 +73,9 @@
                 .removeClass(this.invisibleClass);
         },
 
-        importHandler: function () {
+        importHandler: function (event) {
+
+
             var utils = Transcripts.Utils,
                 component_id = this.options.component_id,
                 videoList = this.options.parent.getVideoObjectsList();
