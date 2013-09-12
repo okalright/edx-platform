@@ -43,7 +43,13 @@
 
             utils.command('check', component_id, videoList)
                 .done(function (resp) {
-                    self.messenger.render(resp.command);
+
+                    resp.status.html5_local = ['OEoXaMPEzfM', '2222'];
+                    self.messenger.render(
+                        /* resp.command, */
+                        'choose',
+                        resp.status
+                    );
                 })
                 .fail(function (resp) {
                     self.messenger.render('not_found');

@@ -33,8 +33,16 @@
             });
         },
 
-        render: function (template) {
-            var tpl = $(this.templates[template]).text();
+        render: function (template, params) {
+            var tpl = $(this.templates[template]).text(),
+                videoList = this.options.parent.getVideoObjectsList(),
+                groupedList = _.groupBy(
+                    videoList,
+                    function (value) {
+                        return value.video;
+                    }
+                ),
+                html5List = params.html5_local;
 
             if (!tpl) {
                 console.error('Couldn\'t load Transcripts status template');
@@ -43,7 +51,9 @@
             this.$el
                 .removeClass('is-invisible')
                 .find(this.elClass).html(this.template({
-                    component_id: encodeURIComponent(this.options.component_id)
+                    component_id: encodeURIComponent(this.options.component_id),
+                    html5_list: html5List,
+                    grouped_list: groupedList
                 }));
 
             this.fileUploader.render();
@@ -88,7 +98,7 @@
                 utils = Transcripts.Utils,
                 component_id = this.options.component_id,
                 videoList = this.options.parent.getVideoObjectsList();
-            
+
             utils.command('import', component_id, videoList)
                 .done(function (resp) {
                     // TODO: update subs field

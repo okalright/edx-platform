@@ -9,10 +9,10 @@
 <%= gettext("Error.") %>
 </p>
 <div class="wrapper-transcripts-buttons">
-    <button class="action setting-choose" type="button" name="setting-choose" data-type="mp4" value="<%= gettext("Timed Transcripts from *.mp4") %>" data-tooltip="<%= gettext("Timed Transcripts from *.mp4") %>">
-        <span><%= gettext("Timed Transcripts from *.mp4") %></span>
-    </button>
-    <button class="action setting-choose" type="button" name="setting-choose" data-type="webm" value="<%= gettext("Timed Transcripts from *.webm") %>" data-tooltip="<%= gettext("Timed Transcripts from *.webm") %>">
-        <span><%= gettext("Timed Transcripts from *.webm") %></span>
-    </button>
+<% _.each(html5_list, function(value, index) {
+%>
+<button class="action setting-choose" type="button" name="setting-choose" data-video-id="<%= value %>" value="<%= gettext("Timed Transcripts from ") %><%= value %>" data-tooltip="<%= gettext("Timed Transcripts from ") %><%= value %>">
+        <span><%= gettext("Timed Transcripts from ") %><%= value %>.<%= grouped_list[value][0].type %></span>
+</button>
+<% }) %>
 </div>
