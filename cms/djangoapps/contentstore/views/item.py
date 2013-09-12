@@ -216,27 +216,29 @@ def delete_item(request):
     return JsonResponse()
 
 
-@return_ajax_status
 def upload_transcripts(request):
     """Try to upload transcripts for current module."""
 
-    # This view return True/False, cause we use `return_ajax_status`
-    # view decorator.
+    response = {
+        'status': 'Error',
+        'subs': '',
+    }
+
     item_location = request.POST.get('id')
     if not item_location:
         log.error('POST data without "id" form data.')
-        return False
+        return JsonResponse(response)
 
     if 'file' not in request.FILES:
         log.error('POST data without "file" form data.')
-        return False
+        return JsonResponse(response)
 
     source_subs_filedata = request.FILES['file'].read()
     source_subs_filename = request.FILES['file'].name
 
     if '.' not in source_subs_filename:
         log.error("Undefined file extension.")
-        return False
+        return JsonResponse(response)
 
     basename = os.path.basename(source_subs_filename)
     source_subs_name = os.path.splitext(basename)[0]
@@ -246,7 +248,7 @@ def upload_transcripts(request):
         item = modulestore().get_item(item_location)
     except (ItemNotFoundError, InvalidLocationError):
         log.error("Can't find item by location.")
-        return False
+        return JsonResponse(response)
 
     # Check permissions for this user within this course.
     if not has_access(request.user, item_location):
@@ -254,7 +256,7 @@ def upload_transcripts(request):
 
     if item.category != 'video':
         log.error('transcripts are supported only for "video" modules.')
-        return False
+        return JsonResponse(response)
 
     speed_subs = {
         0.75: item.youtube_id_0_75,
@@ -263,10 +265,9 @@ def upload_transcripts(request):
         1.5: item.youtube_id_1_5
     }
 
-    if any(speed_subs.values()) and not any(item.html5_sources):
-        log.error("Converting transcripts to youtube modules.")
-        # do it here
-        return False
+    if any(speed_subs.values()):
+        log.debug("Do nothing.")
+        return JsonResponse(response)
     elif any(item.html5_sources):
         sub_attr = slugify(source_subs_name)
 
@@ -282,11 +283,13 @@ def upload_transcripts(request):
             item.save()
             store = get_modulestore(Location(item_location))
             store.update_metadata(item_location, own_metadata(item))
+            response['subs'] = item.sub
+            response['status'] = 'Success'
     else:
         log.error('Empty video sources.')
-        return False
+        return JsonResponse(response)
 
-    return status
+    return JsonResponse(response)
 
 
 def download_transcripts(request):
@@ -542,6 +545,7 @@ def replace_transcripts(request):
     item.sub = slugify(youtube_id)
     item.save()
     response['status'] = 'Success'
+    response['subs'] = item.sub
     return JsonResponse(response)
 
 
