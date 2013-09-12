@@ -31,6 +31,24 @@
             });
         },
 
+        render: function () {
+            var self = this,
+                utils = Transcripts.Utils,
+                component_id =  this.$el.closest('.component').data('id'),
+                videoList = this.getVideoObjectsList();
+
+            CMS.Views.Metadata.AbstractEditor.prototype.render
+                .apply(this, arguments);
+
+            utils.command('check', component_id, videoList)
+                .done(function (resp) {
+                    self.messanger.render(resp.command);
+                })
+                .fail(function (resp) { 
+                    self.messanger.render('not_found');
+                }); 
+        },
+
         getValueFromEditor: function () {
             return _.map(
                 this.$el.find('.input'),
@@ -156,7 +174,6 @@
 
             if (!this.isUniqVideoTypes(videoList)) {
                 this.messanger
-                    .render('not_found')
                     .showError('Link types should be unique.', true);
 
                 return false;
@@ -164,40 +181,11 @@
 
             if (data.mode === 'incorrect' && showErrorModeMessage) {
                 this.messanger
-                    .render('not_found')
                     .showError('Incorrect url format.', true);
 
                 return false;
             }
 
-            utils.command('check', this.component_id, videoList)
-                .done(function (resp) {
-                    var youtubeEdx = resp.youtube_local,
-                        youtubeRemote = resp.youtube_server,
-                        html5Len = resp.html5_local.length,
-                        diff = resp.diff;
-
-                    if (diff) {
-                        if (youtubeEdx && youtubeRemote) {
-                            self.messanger.render('replace');
-                        } else {
-                            self.messanger.render('choose');
-                        }
-                    } else {
-                        if (!youtubeEdx && youtubeRemote) {
-                            self.messanger.render('import');
-                        } else if (youtubeEdx || html5Len) {
-                            self.messanger.render('found');
-                        } else {
-                            self.messanger.render('not_found');
-                        }
-                    };
-                })
-                .fail(function (resp) { 
-                    self.messanger.render('not_found');
-                });
-
-            console.log(data);
             return true;
         }
     });

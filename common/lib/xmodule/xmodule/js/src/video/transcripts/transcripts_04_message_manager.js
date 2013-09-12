@@ -5,10 +5,10 @@
         invisibleClass: 'is-invisible',
 
         events: {
-            'click .setting-import': importHandler,
-            'click ': handler,
-            'click ': handler,
-            'click ': handler
+            'click .setting-import': 'importHandler',
+            // 'click ': handler,
+            // 'click ': handler,
+            // 'click ': handler
         },
 
         templates: {

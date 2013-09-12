@@ -85,10 +85,10 @@
 <script type="text/javascript">
 
     var transcripts = new Transcripts.Editor({
-        el: $('.component-editor').find('.basic_metadata_edit'),
-        transcriptsExist: '${has_subs_content}'
-    });
-    storage = TabsEditingDescriptor.getStorage();
+            el: $('.component-editor').find('.basic_metadata_edit'),
+            transcriptsExist: '${has_subs_content}'
+        }),
+        storage = TabsEditingDescriptor.getStorage();
 
     TabsEditingDescriptor.Model.addModelUpdate(
         '${html_id}',
