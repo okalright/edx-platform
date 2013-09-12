@@ -1,6 +1,23 @@
 (function (window, undefined) {
     Transcripts.Utils = (function () {
 console.log('[Utils]');
+        var Storage = {};
+
+        var _addToStorage = function (id, data) {
+            if (!Storage[id]) {
+                Storage[id] = data;
+            }
+        };
+
+        var _getFromStorage = function (id) {
+
+            return Storage[id];
+        };
+
+        var _deleteFromStorage = function (id) {
+
+            return (delete Storage[id]);
+        };
 
         var _getField = function (collection, field_name) {
 console.log('[Utils::_getField]');
@@ -197,7 +214,10 @@ console.log('[Utils::_command: return]');
             parseLink: _linkParser,
             getYoutubeLink: _getYoutubeLink,
             syncCollections: _syncCollections,
-            command: _command
+            command: _command,
+            addToStorage: _addToStorage,
+            getFromStorage: _getFromStorage,
+            deleteFromStorage: _deleteFromStorage
         };
     }());
 }(this));

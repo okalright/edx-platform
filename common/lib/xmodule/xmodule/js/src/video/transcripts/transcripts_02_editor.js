@@ -70,23 +70,16 @@ console.log('[Editor::syncBasicTab]');
 console.log('[Editor::syncAdvancedTab]');
             var utils = Transcripts.Utils,
                 getField = utils.getField,
+                subsValue = utils.getFromStorage('sub'),
+                subs = getField(metadataCollection, 'sub'),
                 html5Sources, youtube, videoUrlValue, result;
-
 
             if (!metadataCollection) {
                 return false;
             }
 
-            html5Sources = getField(
-                                metadataCollection,
-                                'html5_sources'
-                            );
-
-            youtube = getField(
-                                metadataCollection,
-                                'youtube_id_1_0'
-                            );
-
+            html5Sources = getField(metadataCollection, 'html5_sources');
+            youtube = getField(metadataCollection, 'youtube_id_1_0');
             videoUrlValue = getField(this.collection, 'video_url')
                                 .getDisplayValue();
 
@@ -98,14 +91,12 @@ console.log('[Editor::syncAdvancedTab: groupBy]');
                 }
             );
 
-
             // TODO: CHECK result['html5']
             if (html5Sources) {
                 html5Sources.setValue(result.html5 || []);
             }
 
             if (youtube) {
-
                 if (result.youtube) {
                     result = utils.parseLink(result.youtube[0]).video;
                 } else {
@@ -113,6 +104,10 @@ console.log('[Editor::syncAdvancedTab: groupBy]');
                 }
 
                 youtube.setValue(result);
+            }
+
+            if (_.isString(subsValue)) {
+                subs.setValue(subsValue);
             }
 
             utils.syncCollections(this.collection, metadataCollection);

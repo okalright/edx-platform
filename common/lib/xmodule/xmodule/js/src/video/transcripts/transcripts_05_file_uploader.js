@@ -119,14 +119,17 @@ console.log('FileUploader::xhrProgressHandler');
 
         xhrCompleteHandler: function (xhr) {
 console.log('FileUploader::xhrCompleteHandler');
-            var resp = JSON.parse(xhr.responseText),
-                err = (resp.error) ? resp.error : 'Uploading failed.';
+            var utils = Transcripts.Utils,
+                resp = JSON.parse(xhr.responseText),
+                err = (resp.error) ? resp.error : 'Uploading failed.',
+                videoId = resp.subs;
 
             this.$progress
                 .addClass(this.invisibleClass);
 
-            if (xhr.status === 200 && resp.success) {
+            if (xhr.status === 200 && resp.status === "Success") {
                 this.options.messenger.render('uploaded');
+                utils.addToStorage('sub', videoId);
             } else {
                 // TODO Retrieve error form server
                 this.options.messenger.showError(err);

@@ -43,7 +43,7 @@ console.log('[MessageManager::render: groupBy]');
                         return value.video;
                     }
                 ),
-                html5List = params.html5_local,
+                html5List = (params) ? params.html5_local : [],
                 template;
 
             if (!tplHtml) {
@@ -62,7 +62,11 @@ console.log('[MessageManager::render: groupBy]');
                 }));
             console.log('c');
 
-            this.fileUploader.render();
+            if (params) {
+                if (!(params.youtube_local && params.youtube_server)) {
+                    this.fileUploader.render();
+                }
+            }
 
             return this;
         },
@@ -107,14 +111,17 @@ console.log('[MessageManager::importTranscripts]');
             var self = this,
                 utils = Transcripts.Utils,
                 component_id = this.options.component_id,
-                videoList = this.options.parent.getVideoObjectsList();
-
-            utils.command('import', component_id, videoList)
+                parent = this.options.parent,
+                videoList = parent.getVideoObjectsList();
+            
+            utils.command('replace', component_id, videoList)
                 .done(function (resp) {
 console.log('[MessageManager::importTranscripts: done]');
-                    // TODO: update subs field
+                    var utils = Transcripts.Utils,
+                        videoId = resp.status.subs;
 
                     self.render('found');
+                    utils.addToStorage('subs', videoId);
                 })
                 .fail(function (resp) {
 console.log('[MessageManager::importTranscripts: fail]');

@@ -46,11 +46,9 @@ console.log('[VideoList::render]');
             utils.command('check', component_id, videoList)
                 .done(function (resp) {
 console.log('[VideoList::render: done]');
+                    var params = resp.status;
 
-                    self.messenger.render(
-                        resp.command, // For example 'choose'.
-                        resp.status
-                    );
+                    self.messenger.render(resp.command, params);
                 })
                 .fail(function (resp) {
 console.log('[VideoList::render: fail]');
@@ -172,6 +170,8 @@ console.log('[VideoList::inputHandler]');
                 data = Transcripts.Utils.parseLink(entry),
                 isNotEmpty = Boolean(entry),
                 $el = $(event.currentTarget);
+
+            this.messenger.hideError();
 
             if (this.checkValidity(data, isNotEmpty)) {
                 this.updateModel();

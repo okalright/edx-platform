@@ -90,6 +90,8 @@
         }),
         storage = TabsEditingDescriptor.getStorage();
 
+    Transcripts.Utils.addToStorage('TabsStorage', storage);
+
     TabsEditingDescriptor.Model.addModelUpdate(
         '${html_id}',
         '${tabName}',
@@ -98,7 +100,7 @@
             metadataEditor = storage.MetadataEditor;
 
             if (metadataEditor) {
-              transcripts.syncAdvancedTab(metadataEditor.collection);
+                transcripts.syncAdvancedTab(metadataEditor.collection);
             }
         }
     );
@@ -111,7 +113,7 @@
             metadataEditor = storage.MetadataEditor;
 
             if (metadataEditor) {
-              transcripts.syncBasicTab(metadataEditor.collection);
+                transcripts.syncBasicTab(metadataEditor.collection);
             }
         }
     );
