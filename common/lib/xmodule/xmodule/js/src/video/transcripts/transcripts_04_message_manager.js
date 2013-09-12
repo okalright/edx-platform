@@ -6,6 +6,8 @@
 
         events: {
             'click .setting-import': 'importHandler',
+            'click .setting-replace': 'importHandler',
+            'click .setting-choose': 'chooseHandler',
             // 'click ': handler,
             // 'click ': handler,
             // 'click ': handler
@@ -22,6 +24,8 @@
         },
 
         initialize: function () {
+            _.bindAll(this);
+
             this.fileUploader = new Transcripts.FileUploader({
                 el: this.$el,
                 messenger: this,
@@ -74,15 +78,26 @@
         },
 
         importHandler: function (event) {
+            event.preventDefault();
 
+            this.importTranscripts();
+        },
 
-            var utils = Transcripts.Utils,
+        importTranscripts: function () {
+            var self = this,
+                utils = Transcripts.Utils,
                 component_id = this.options.component_id,
                 videoList = this.options.parent.getVideoObjectsList();
-            //import
+            
             utils.command('import', component_id, videoList)
-                .done(callback)
-                .fail(callback);
+                .done(function (resp) {
+                    // TODO: update subs field
+
+                    self.render('found');
+                })
+                .fail(function (resp) {
+                    self.showError('Error: Import failed.');
+                });
         }
 
     });
