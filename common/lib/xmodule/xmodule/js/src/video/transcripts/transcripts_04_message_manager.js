@@ -6,11 +6,9 @@
 
         events: {
             'click .setting-import': 'importHandler',
-            'click .setting-replace': 'importHandler',
+            'click .setting-replace': 'replaceHandler',
             'click .setting-choose': 'chooseHandler',
-            // 'click ': handler,
-            // 'click ': handler,
-            // 'click ': handler
+            'click .setting-use-existing': 'useExistingHandler'
         },
 
         templates: {
@@ -122,6 +120,44 @@ console.log('[MessageManager::importTranscripts: done]');
 console.log('[MessageManager::importTranscripts: fail]');
                     self.showError('Error: Import failed.');
                 });
+        },
+
+        replaceHandler: function (event) {
+console.log('[MessageManager::replaceHandler]');
+            event.preventDefault();
+
+            this.replaceTranscripts();
+        },
+
+        replaceTranscripts: function () {
+console.log('[MessageManager::replaceTranscripts]');
+            var self = this,
+                utils = Transcripts.Utils,
+                component_id = this.options.component_id,
+                videoList = this.options.parent.getVideoObjectsList();
+
+            utils.command('replace', component_id, videoList)
+                .done(function (resp) {
+console.log('[MessageManager::replaceTranscripts: done]');
+                    // TODO: update subs field
+
+                    self.render('replaced');
+                })
+                .fail(function (resp) {
+console.log('[MessageManager::replaceTranscripts: fail]');
+                    self.showError('Error: Replacing failed.');
+                });
+        },
+
+        useExistingHandler: function (event) {
+console.log('[MessageManager::useExistingHandler]');
+            event.preventDefault();
+
+            this.useExistingTranscripts();
+        },
+
+        useExistingTranscripts: function () {
+            // TODO
         }
 
     });
