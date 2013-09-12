@@ -9,10 +9,10 @@
 <%= gettext("Error.") %>
 </p>
 <div class="wrapper-transcripts-buttons">
-    <button class="action setting-choose" type="button" name="setting-choose" value="<%= gettext("Timed Transcripts from *.mp4") %>" data-tooltip="<%= gettext("Timed Transcripts from *.mp4") %>">
+    <button class="action setting-choose" type="button" name="setting-choose" data-type="mp4" value="<%= gettext("Timed Transcripts from *.mp4") %>" data-tooltip="<%= gettext("Timed Transcripts from *.mp4") %>">
         <span><%= gettext("Timed Transcripts from *.mp4") %></span>
     </button>
-    <button class="action setting-choose" type="button" name="setting-choose" value="<%= gettext("Timed Transcripts from *.webm") %>" data-tooltip="<%= gettext("Timed Transcripts from *.webm") %>">
+    <button class="action setting-choose" type="button" name="setting-choose" data-type="webm" value="<%= gettext("Timed Transcripts from *.webm") %>" data-tooltip="<%= gettext("Timed Transcripts from *.webm") %>">
         <span><%= gettext("Timed Transcripts from *.webm") %></span>
     </button>
 </div>

@@ -4,6 +4,13 @@
         elClass: '.wrapper-transcripts-message',
         invisibleClass: 'is-invisible',
 
+        events: {
+            'click .setting-import': importHandler,
+            'click ': handler,
+            'click ': handler,
+            'click ': handler
+        },
+
         templates: {
             not_found: '#transcripts-not-found',
             found: '#transcripts-found',
@@ -11,7 +18,7 @@
             replace:  '#transcripts-replace',
             uploaded:  '#transcripts-uploaded',
             not_updated: '#transcripts-not-updated',
-            choose: '#transcripts-choose' 
+            choose: '#transcripts-choose'
         },
 
         initialize: function () {
@@ -64,6 +71,16 @@
 
             this.$el.find('.wrapper-transcripts-buttons')
                 .removeClass(this.invisibleClass);
+        },
+
+        importHandler: function () {
+            var utils = Transcripts.Utils,
+                component_id = this.options.component_id,
+                videoList = this.options.parent.getVideoObjectsList();
+            //import
+            utils.command('import', component_id, videoList)
+                .done(callback)
+                .fail(callback);
         }
 
     });
