@@ -10,5 +10,10 @@
             expect($.isArray(mc.models)).toBeTruthy();
             expect(mc.models.length).toBe(0);
         });
+
+        it('check that Transcripts.Editor is available', function () {
+            expect(Transcripts).toBeDefined();
+            expect(Transcripts.Editor).toBeDefined();
+        });
     });
 }(window));
