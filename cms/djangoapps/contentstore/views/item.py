@@ -25,7 +25,7 @@ from ..utils import (get_modulestore, manage_video_transcripts,
                      return_ajax_status, generate_subs_from_source,
                      generate_srt_from_sjson, remove_subs_from_store,
                      save_subs_to_store, requests as rqsts,
-                     download_youtube_subs)
+                     download_youtube_subs, get_transcripts_from_youtube)
 from .access import has_access
 from .requests import _xmodule_recurse
 from xmodule.x_module import XModuleDescriptor
@@ -357,16 +357,28 @@ def check_transcripts(request):
         {u'type': u'html5',    u'video': u'video1',             u'mode': u'mp4'}
         {u'type': u'html5',    u'video': u'video2',             u'mode': u'webm'}
     ]
+
+    Returns transcripts_presence object::
+
+        html5_local: [], [True], [True], if html5 subtitles exist locally for any of [0-2] sources
+        html5_diff: bool, if html5 transcripts are different
+        'youtube_local': bool, if youtube transcripts exist locally
+        'youtube_server': bool, if youtube transcripts exist on server
+        'youtube_diff': bool, if youtube transcripts exist on youtube server, and different from local
+        'status': 'Error' or 'Success'
     """
     transcripts_presence = {
         'html5_local': [],
         'youtube_local': False,
         'youtube_server': False,
+        'youtube_diff': False,
+        'current_item_subs': None,
         'status': 'Error'
     }
     data, item = validate_transcripts_data(request, transcripts_presence)
 
     transcripts_presence['status'] = 'Success'
+    transcripts_presence['current_item_subs'] = item.sub
 
     # preprocess data
     videos = {'youtube': '', 'html5': {}}
@@ -399,6 +411,25 @@ def check_transcripts(request):
         if youtube_response.status_code == 200 and youtube_response.text:
             transcripts_presence['youtube_server'] = True
 
+        #check youtube local and server transcripts for equality
+        if transcripts_presence['youtube_server'] and transcripts_presence['youtube_local']:
+            # get transcripts from youtube:
+            status, subs = get_transcripts_from_youtube(youtube_id)
+            if status:
+                server_transcripts = json.dumps(subs, indent=2)
+                # get local subs:
+                filename = 'subs_{0}.srt.sjson'.format(youtube_id)
+                content_location = StaticContent.compute_location(
+                    item.location.org, item.location.course, filename)
+                try:
+                    local_transcripts = contentstore().find(content_location).data
+                except NotFoundError:
+                    log.debug("Can't find content in storage for youtube sub.")
+                else:
+                    #check transcrips for equality
+                    if local_transcripts == server_transcripts:
+                        transcripts_presence['youtube_diff'] = True
+
     # Check for html5 local transcripts presence
     for html5_id in videos:
         filename = 'subs_{0}.srt.sjson'.format(html5_id)
@@ -406,11 +437,55 @@ def check_transcripts(request):
             item.location.org, item.location.course, filename)
         try:
             contentstore().find(content_location)
-            transcripts_presence['html5_local'].append(True)
+            transcripts_presence['html5_local'].append(html5_id)
         except NotFoundError:
             # change to log.message?
             log.debug("Can't find transcripts in storage for non-youtube video_id: {}".format(html5_id))
-    return JsonResponse(transcripts_presence)
+
+    response = {
+        'status': transcripts_presence,
+        'command': transcripts_logic(transcripts_presence)
+    }
+    return JsonResponse(response)
+
+
+def transcripts_logic(transcripts_presence):
+    """
+    By trascripts status figure what show to user:
+    transcripts_presence = {
+        'html5_local': [],
+        'html5_diff': False,
+        'youtube_local': False,
+        'youtube_server': False,
+        'youtube_diff': False,
+        'status': 'Error'
+    }
+
+    output: command to do::
+        'choose',
+        'replace',
+        'import'
+    """
+    command = None
+
+    # youtube transcripts are more prioritized that html5 by design
+    if transcripts_presence['youtube_diff']:  # youtube server and local exist
+        command = 'replace'
+    elif transcripts_presence['youtube_local']:  # only youtube local exist
+        command = 'found'
+    elif transcripts_presence['youtube_server']:  # only youtube server exist
+        command = 'import'
+    else:  # html5 part
+        if transcripts_presence['html5_local']:
+            if len(transcripts_presence['html5_local']) == 1:
+                command = 'found'
+            else:  # len is 2
+                assert len(transcripts_presence['html5_local']) == 2
+                command = 'choose'
+        else:
+            command = 'not_found'
+
+    return command
 
 
 def choose_transcripts(request):
@@ -435,7 +510,8 @@ def choose_transcripts(request):
 
     # find rejected html5_id and remove appropriate subs from store
     html5_id_to_remove = [x for x in videos['html5'] if x != html5_id]
-    remove_subs_from_store(html5_id_to_remove, item)
+    if html5_id_to_remove:
+        remove_subs_from_store(html5_id_to_remove, item)
 
     # update sub value
     if item.sub != slugify(html5_id):

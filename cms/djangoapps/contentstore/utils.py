@@ -308,13 +308,45 @@ def save_subs_to_store(subs, subs_id, item):
     return content_location
 
 
+def get_transcripts_from_youtube(youtube_id):
+    """
+    Gets transcripts from youtube for youtube_id.
+    Returns (status, transcripts): bool, dict.
+    """
+    html_parser = HTMLParser.HTMLParser()
+    data = requests.get(
+        "http://video.google.com/timedtext",
+        params={'lang': 'en', 'v': youtube_id})
+
+    if data.status_code != 200 or not data.text:
+        log.debug("Can't recieved correct transcripts from Youtube.")
+        return False,  {}
+
+    sub_starts, sub_ends, sub_texts = [], [], []
+
+    xmltree = etree.fromstring(str(data.text))
+    for element in xmltree:
+        if element.tag == "text":
+            start = float(element.get("start"))
+            duration = float(element.get("dur"))
+            text = element.text
+            end = start + duration
+
+            if text:
+                # Start and end are an int representing the millisecond timestamp.
+                sub_starts.append(int(start * 1000))
+                sub_ends.append(int((end + 0.0001) * 1000))
+                sub_texts.append(html_parser.unescape(text.replace('\n', ' ')))
+
+    return True, {'start': sub_starts, 'end': sub_ends, 'text': sub_texts}
+
+
 def download_youtube_subs(youtube_subs, item):
     """Download transcripts from Youtube using `youtube_ids`, and
     save them to assets for `item` module.
 
     Test: http://video.google.com/timedtext?lang=en&v=j_jEn79vS3g
     """
-    html_parser = HTMLParser.HTMLParser()
     status_dict = {}
 
     # Iterate from lowest to highest speed and try to do download transcripts
@@ -323,41 +355,12 @@ def download_youtube_subs(youtube_subs, item):
         if not youtube_id:
             continue
 
-        data = requests.get(
-            "http://video.google.com/timedtext",
-            params={'lang': 'en', 'v': youtube_id})
-
-        if data.status_code != 200 or not data.text:
-            status_dict.update({speed: False})
-            log.error("Can't recieved correct transcripts from Youtube.")
+        status, subs = get_transcripts_from_youtube(youtube_id)
+        if not status:
+            status_dict.update({speed: status})
             continue
 
-        sub_starts = []
-        sub_ends = []
-        sub_texts = []
-
-        xmltree = etree.fromstring(str(data.text))
-        for element in xmltree:
-            if element.tag == "text":
-                start = float(element.get("start"))
-                duration = float(element.get("dur"))
-                text = element.text
-                end = start + duration
-
-                if text:
-                    # Start and end are an int representing the
-                    # millisecond timestamp.
-                    sub_starts.append(int(start * 1000))
-                    sub_ends.append(int((end + 0.0001) * 1000))
-                    sub_texts.append(
-                        html_parser.unescape(text.replace('\n', ' ')))
-
         available_speed = speed
-        subs = {
-            'start': sub_starts,
-            'end': sub_ends,
-            'text': sub_texts}
-
         save_subs_to_store(subs, youtube_id, item)
 
         log.info(
