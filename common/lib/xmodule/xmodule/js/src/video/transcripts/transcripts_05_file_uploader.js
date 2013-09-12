@@ -10,6 +10,7 @@
 
         uploadTpl: '#transcripts-file-upload',
         initialize: function () {
+console.log('FileUploader::initialize');
             _.bindAll(this);
 
             this.file = false;
@@ -17,6 +18,7 @@
         },
 
         render: function () {
+console.log('FileUploader::render');
             var tpl = $(this.uploadTpl).text(),
                 tplContainer = this.$el.find('.transcripts-file-uploader');
 
@@ -39,6 +41,7 @@
         },
 
         upload: function () {
+console.log('FileUploader::upload');
             if (!this.file) {
                 return;
             }
@@ -51,6 +54,7 @@
         },
 
         clickHandler: function (event) {
+console.log('FileUploader::clickHandler');
             event.preventDefault();
 
             this.$input
@@ -59,12 +63,14 @@
         },
 
         uploadHadler: function (event) {
+console.log('FileUploader::uploadHadler');
             event.preventDefault();
 
             this.upload();
         },
 
         changeHadler: function (event) {
+console.log('FileUploader::changeHadler');
             event.preventDefault();
 
             this.options.messenger.hideError();
@@ -79,6 +85,7 @@
         },
 
         checkExtValidity: function (file) {
+console.log('FileUploader::checkExtValidity');
             var fileExtension = file.name
                                     .split('.')
                                     .pop()
@@ -92,6 +99,7 @@
         },
 
         xhrResetProgressBar: function () {
+console.log('FileUploader::xhrResetProgressBar');
             var percentVal = '0%';
 
             this.$progress
@@ -101,6 +109,7 @@
         },
 
         xhrProgressHandler: function (event, position, total, percentComplete) {
+console.log('FileUploader::xhrProgressHandler');
             var percentVal = percentComplete + '%';
 
             this.$progress
@@ -109,6 +118,7 @@
         },
 
         xhrCompleteHandler: function (xhr) {
+console.log('FileUploader::xhrCompleteHandler');
             var resp = JSON.parse(xhr.responseText),
                 err = (resp.error) ? resp.error : 'Uploading failed.';
 

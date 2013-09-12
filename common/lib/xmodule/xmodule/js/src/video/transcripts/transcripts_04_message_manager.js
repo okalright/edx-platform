@@ -24,6 +24,7 @@
         },
 
         initialize: function () {
+console.log('[MessageManager::initialize]');
             _.bindAll(this);
 
             this.fileUploader = new Transcripts.FileUploader({
@@ -33,28 +34,35 @@
             });
         },
 
-        render: function (template, params) {
-            var tpl = $(this.templates[template]).text(),
+        render: function (template_id, params) {
+console.log('[MessageManager::render]');
+            var tplHtml = $(this.templates[template_id]).text(),
                 videoList = this.options.parent.getVideoObjectsList(),
                 groupedList = _.groupBy(
                     videoList,
                     function (value) {
+console.log('[MessageManager::render: groupBy]');
                         return value.video;
                     }
                 ),
-                html5List = params.html5_local;
+                html5List = params.html5_local,
+                template;
 
-            if (!tpl) {
+            if (!tplHtml) {
                 console.error('Couldn\'t load Transcripts status template');
             }
-            this.template = _.template(tpl);
+            console.log('a');
+            console.log('tplHtml = ', tplHtml);
+            template = _.template(tplHtml);
+            console.log('b');
             this.$el
                 .removeClass('is-invisible')
-                .find(this.elClass).html(this.template({
+                .find(this.elClass).html(template({
                     component_id: encodeURIComponent(this.options.component_id),
                     html5_list: html5List,
                     grouped_list: groupedList
                 }));
+            console.log('c');
 
             this.fileUploader.render();
 
@@ -62,6 +70,7 @@
         },
 
         showError: function (err, hideButtons) {
+console.log('[MessageManager::showError]');
             var $error = this.$el.find('.transcripts-error-message');
 
             if (err) {
@@ -80,6 +89,7 @@
         },
 
         hideError: function () {
+console.log('[MessageManager::hideError]');
             this.$el.find('.transcripts-error-message')
                 .addClass(this.invisibleClass);
 
@@ -88,12 +98,14 @@
         },
 
         importHandler: function (event) {
+console.log('[MessageManager::importHandler]');
             event.preventDefault();
 
             this.importTranscripts();
         },
 
         importTranscripts: function () {
+console.log('[MessageManager::importTranscripts]');
             var self = this,
                 utils = Transcripts.Utils,
                 component_id = this.options.component_id,
@@ -101,11 +113,13 @@
 
             utils.command('import', component_id, videoList)
                 .done(function (resp) {
+console.log('[MessageManager::importTranscripts: done]');
                     // TODO: update subs field
 
                     self.render('found');
                 })
                 .fail(function (resp) {
+console.log('[MessageManager::importTranscripts: fail]');
                     self.showError('Error: Import failed.');
                 });
         }

@@ -5,6 +5,7 @@
 
         // TODO: JS test.
         initialize: function () {
+console.log('[Editor::initialize]');
             var metadata = this.$el.data('metadata'),
                 models = this.toModels(metadata);
 
@@ -20,6 +21,7 @@
         //
         // TODO: JS test.
         toModels: function (data) {
+console.log('[Editor::toModels]');
             var metadata = (_.isString(data)) ? JSON.parse(data) : data,
                 models = [];
 
@@ -33,6 +35,7 @@
         },
 
         syncBasicTab: function (metadataCollection) {
+console.log('[Editor::syncBasicTab]');
             var result = [],
                 utils = Transcripts.Utils,
                 getField = utils.getField,
@@ -64,6 +67,7 @@
         },
 
         syncAdvancedTab: function (metadataCollection) {
+console.log('[Editor::syncAdvancedTab]');
             var utils = Transcripts.Utils,
                 getField = utils.getField,
                 html5Sources, youtube, videoUrlValue, result;
@@ -89,6 +93,7 @@
             result = _.groupBy(
                 videoUrlValue,
                 function (value) {
+console.log('[Editor::syncAdvancedTab: groupBy]');
                     return utils.parseLink(value).mode;
                 }
             );
@@ -100,9 +105,9 @@
             }
 
             if (youtube) {
-                
+
                 if (result.youtube) {
-                    result = utils.parseLink(result.youtube[0]).video;                    
+                    result = utils.parseLink(result.youtube[0]).video;
                 } else {
                     result = '';
                 }
