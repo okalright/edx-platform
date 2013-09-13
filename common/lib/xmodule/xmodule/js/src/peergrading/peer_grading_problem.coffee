@@ -27,7 +27,7 @@ class @PeerGradingProblemBackend
     else
       # if this post request fails, the error callback will catch it
       $.post(@ajax_url + cmd, data, callback)
-        .error => callback({success: false, error: "Error occured while performing this operation"})
+        .error => callback({success: false, error: "Error occurred while performing this operation"})
 
   mock: (cmd, data) ->
     if cmd == 'is_student_calibrated'
@@ -494,7 +494,7 @@ class @PeerGradingProblem
     else if response.error
       @render_error(response.error)
     else
-      @render_error("An error occured when retrieving the next submission.")
+      @render_error("An error occurred when retrieving the next submission.")
 
 
   make_paragraphs: (text) ->
