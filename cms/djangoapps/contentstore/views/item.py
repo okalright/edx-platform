@@ -395,7 +395,7 @@ def check_transcripts(request):
             videos['youtube'] = video_data['video']
         else:  # do not add same html5 videos
             if videos['html5'].get('video') != video_data['video']:
-                videos['html5'][video_data['video']] = video_data['mode']
+                videos['html5'][video_data['video']] = video_data['type']
 
     # Check for youtube transcripts presence
     youtube_id = videos.get('youtube', None)
@@ -480,7 +480,10 @@ def transcripts_logic(transcripts_presence):
     command = None
 
     # youtube transcripts are more prioritized that html5 by design
-    if transcripts_presence['youtube_diff']:  # youtube server and local exist
+    if (
+            transcripts_presence['youtube_diff'] and
+            transcripts_presence['youtube_local'] and
+            transcripts_presence['youtube_server']):  # youtube server and local exist
         command = 'replace'
     elif transcripts_presence['youtube_local']:  # only youtube local exist
         command = 'found'
