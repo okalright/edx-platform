@@ -139,7 +139,7 @@
         },
 
         useExistingTranscript: function () {
-            self.render('found');
+            this.render('found');
         }
 
     });

@@ -43,9 +43,17 @@
 
             utils.command('check', component_id, videoList)
                 .done(function (resp) {
-                    var params = resp.status;
+                    var params = resp.status,
+                        mode = (videoList.length) ? videoList[0].mode : false;
+
+                    if (videoList.length > 1 || mode === 'html5') {
+                        self.openAdditional();
+                    } else {
+                        self.closeAdditional();
+                    }
 
                     self.messenger.render(resp.command, params);
+                    self.checkIsUniqVideoTypes();
                 });
         },
 
@@ -85,12 +93,6 @@
                 list.eq(i)
                     .val(val[i] || null)
                     .attr('placeholder', placeholders[i]);
-            }
-
-            if (val.length > 1 || parseLink(val[0]).mode === 'html5') {
-                this.openAdditional();
-            } else {
-                this.closeAdditional();
             }
         },
 
@@ -156,7 +158,20 @@
                 $el = $(event.currentTarget);
 
             if (this.checkValidity(data, isNotEmpty)) {
-                this.updateModel();
+                var fieldsValue = this.getValueFromEditor(),
+                    modelValue = this.model.getValue().filter(_.identity);
+
+                // When some correct value (change model) was adjusted, 
+                // than changed to incorrect (no changes to model), than 
+                // back previous one correct value (that value is already 
+                // in model). In this case Backbone doesn't trigger 'change'
+                // event on model. That's why render method will not be invoked
+                // and we should hide error here.
+                if (_.isEqual(fieldsValue, modelValue)) {
+                    this.messenger.hideError();
+                } else {
+                    this.updateModel();
+                }
             } else if ($el.hasClass('videolist-url')) {
                 this.closeAdditional();
             }
@@ -169,10 +184,8 @@
             return arr.length === uniqArr.length;
         },
 
-        checkValidity: function (data, showErrorModeMessage) {
-            var self = this,
-                utils = Transcripts.Utils,
-                videoList = this.getVideoObjectsList();
+        checkIsUniqVideoTypes: function (videoList) {
+            var videoList = videoList || this.getVideoObjectsList();
 
             if (!this.isUniqVideoTypes(videoList)) {
                 this.messenger
@@ -180,7 +193,15 @@
 
                 return false;
             }
+        },
 
+        checkValidity: function (data, showErrorModeMessage) {
+            var self = this,
+                utils = Transcripts.Utils,
+                videoList = this.getVideoObjectsList();
+
+            this.checkIsUniqVideoTypes(videoList);
+                
             if (data.mode === 'incorrect' && showErrorModeMessage) {
                 this.messenger
                     .showError('Incorrect url format.', true);
@@ -188,8 +209,6 @@
                 return false;
             }
 
-            this.messenger.hideError();
-            console.log(data)
             return true;
         }
     });
