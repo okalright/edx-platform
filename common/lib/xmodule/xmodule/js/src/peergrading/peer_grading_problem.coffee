@@ -452,8 +452,8 @@ class @PeerGradingProblem
       @flag_student_container.hide()
       @answer_unknown_container.hide()
 
-      @feedback_area.val("")
-
+      @feedback_area.val("Once you are done with training and are grading real student essays, you will be asked to share feedback with them in addition to grading their rubric.")
+      @feedback_area.attr('disabled', true)
       @submit_button.show()
       @submit_button.unbind('click')
       @submit_button.click @submit_calibration_essay
