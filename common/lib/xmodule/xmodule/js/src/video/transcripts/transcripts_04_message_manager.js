@@ -63,12 +63,18 @@ console.log('[MessageManager::render: groupBy]');
             console.log('c');
 
             if (params) {
-                if (!(params.youtube_local && params.youtube_server)) {
+                if (params.youtube_local || params.youtube_server) {
+                    this.hideUploadButton();
+                } else {
                     this.fileUploader.render();
                 }
             }
 
             return this;
+        },
+
+        hideUploadButton: function () {
+            this.$el.find('.setting-upload').hide();
         },
 
         showError: function (err, hideButtons) {
