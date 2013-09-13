@@ -293,7 +293,9 @@ class @CombinedOpenEnded
     else if @child_state == 'initial'
       @answer_area.attr("disabled", false)
       @submit_button.prop('value', 'Submit')
-      @submit_button.click @save_answer
+      @submit_button.click ->
+        if confirm "Please confirm you wish to submit your work. (You will not be able to make changes)"
+          @save_answer
       @setup_file_upload()
     else if @child_state == 'assessing'
       @answer_area.attr("disabled", true)
