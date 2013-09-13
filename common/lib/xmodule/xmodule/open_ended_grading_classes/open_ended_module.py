@@ -713,6 +713,7 @@ class OpenEndedModule(openendedchild.OpenEndedChild):
             'correct': correct,
             'accept_file_upload': self.accept_file_upload,
             'eta_message': eta_string,
+            'data_peer_grading': reverse('peer_grading'),
         }
         html = system.render_template('{0}/open_ended.html'.format(self.TEMPLATE_DIR), context)
         return html

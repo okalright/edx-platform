@@ -308,7 +308,8 @@ class @CombinedOpenEnded
         @submit_button.hide()
         @queueing()
         @grader_status = @$(@grader_status_sel)
-        @grader_status.html("<span class='grading'>Your response has been submitted.  Please check back later for your grade.</span> ")
+        @peer_grading_url = @grader_status.attr('data-peer-grading')
+        @grader_status.html("<span class='grading'>Your response has been submitted.  Please <a href='#{@peer_grading_url}'>give your peers some feedback</a> and check back later for your grade.</span>")
       else if @child_type == "selfassessment"
         @setup_score_selection()
     else if @child_state == 'post_assessment'
