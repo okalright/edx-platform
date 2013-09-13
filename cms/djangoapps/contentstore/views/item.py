@@ -440,7 +440,7 @@ def check_transcripts(request):
                         transcripts_presence['youtube_diff'] = False
 
     # Check for html5 local transcripts presence
-    for html5_id in videos:
+    for html5_id in videos['html5']:
         filename = 'subs_{0}.srt.sjson'.format(html5_id)
         content_location = StaticContent.compute_location(
             item.location.org, item.location.course, filename)
