@@ -28,10 +28,16 @@ class LocMapperStore(object):
 
     # C0103: varnames and attrs must be >= 3 chars, but db defined by long time usage
     # pylint: disable = C0103
-    def __init__(self, host, db, collection, port=27017, user=None, password=None, **kwargs):
+    def __init__(self, host, db, collection, port=27017, user=None, password=None,
+        **kwargs):
         '''
         Constructor
         '''
+        # get rid of unwanted args
+        kwargs.pop('default_class', None)
+        kwargs.pop('fs_root', None)
+        kwargs.pop('xblock_mixins', None)
+        kwargs.pop('render_template', None)
         self.db = pymongo.database.Database(
             pymongo.MongoClient(
                 host=host,
@@ -151,7 +157,7 @@ class LocMapperStore(object):
             if add_entry_if_missing:
                 usage_id = self._add_to_block_map(location, location_id, entry['block_map'])
             else:
-                raise ItemNotFoundError()
+                raise ItemNotFoundError(location)
         elif isinstance(usage_id, dict):
             # name is not unique, look through for the right category
             if location.category in usage_id:
@@ -336,6 +342,8 @@ class LocMapperStore(object):
             # the block ids will likely be out of sync and collide from an id perspective. HOWEVER,
             # if there are few == org/course roots or their content is unrelated, this will work well.
             usage_id = self._verify_uniqueness(location.category + location.name[:3], block_map)
+        else:
+            usage_id = location.name
         block_map.setdefault(location.name, {})[location.category] = usage_id
         self.location_map.update(location_id, {'$set': {'block_map': block_map}})
         return usage_id

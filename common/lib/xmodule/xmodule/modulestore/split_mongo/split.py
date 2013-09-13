@@ -56,9 +56,11 @@ class SplitMongoModuleStore(ModuleStoreBase):
                  error_tracker=null_error_tracker,
                  user=None, password=None,
                  mongo_options=None,
+                 loc_mapper=None,
                  **kwargs):
 
         super(SplitMongoModuleStore, self).__init__(**kwargs)
+        self.loc_mapper = loc_mapper
         if mongo_options is None:
             mongo_options = {}
 
@@ -319,11 +321,14 @@ class SplitMongoModuleStore(ModuleStoreBase):
         """
         # intended for temporary support of some pointers being old-style
         if isinstance(location, Location):
-            # this fully spec'd path to keep tests from importing django
-            location = modulestore.django.loc_mapper().translate_location(
-                None, location, location.revision is None,
-                add_entry_if_missing=False
-            )
+            if self.loc_mapper:
+                # this fully spec'd path to keep tests from importing django
+                location = self.loc_mapper.translate_location(
+                    None, location, location.revision is None,
+                    add_entry_if_missing=False
+                )
+            else:
+                raise InsufficientSpecificationError('No location mapper configured')
         assert isinstance(location, BlockUsageLocator)
         if not location.is_initialized():
             raise InsufficientSpecificationError("Not yet initialized: %s" % location)
@@ -735,12 +740,8 @@ class SplitMongoModuleStore(ModuleStoreBase):
             new_id = structure['_id']
             # db update
             self.structures.update({'_id': new_id}, new_structure)
-            # cache update (note, doesn't recompute inheritance)
-            new_structure['blocks'][new_usage_id]['edit_info']['update_version'] = new_id
-            system = self._get_cache(new_id)
-            system.course_entry = new_structure
-            cache_root = course_or_parent_locator.usage_id if parent else new_usage_id
-            self.cache_items(system, [cache_root])
+            # clear cache so things get refetched and inheritance recomputed
+            self._clear_cache()
         else:
             new_id = self.structures.insert(new_structure)
 
@@ -1202,7 +1203,12 @@ class SplitMongoModuleStore(ModuleStoreBase):
                 inheriting_settings[field_name] = block_fields[field_name]
 
         for child in block_fields.get('children', []):
-            self.inherit_settings(block_map, block_map[child], inheriting_settings)
+            try:
+                self.inherit_settings(block_map, block_map[child], inheriting_settings)
+            except KeyError:
+                # here's where we need logic for looking up in other structures when we allow cross pointers
+                # but it's also getting this during course creation if creating top down w/ children set.
+                pass
 
     def descendants(self, block_map, usage_id, depth, descendent_map):
         """
@@ -1247,9 +1253,10 @@ class SplitMongoModuleStore(ModuleStoreBase):
         """
         original_structure = self._lookup_course(course_locator)
         for block in original_structure['blocks'].itervalues():
-            block['fields']["children"] = [
-                usage_id for usage_id in block['fields']["children"] if usage_id in original_structure['blocks']
-            ]
+            if 'fields' in block and 'children' in block['fields']:
+                block['fields']["children"] = [
+                    usage_id for usage_id in block['fields']["children"] if usage_id in original_structure['blocks']
+                ]
         self.structures.update({'_id': original_structure['_id']}, original_structure)
 
 
@@ -1295,9 +1302,9 @@ class SplitMongoModuleStore(ModuleStoreBase):
         """
         if len(lista) != len(listb):
             return False
-        for idx in enumerate(lista):
-            if lista[idx] != listb[idx]:
-                itema = self._usage_id(lista[idx])
+        for idx, ele in enumerate(lista):
+            if ele != listb[idx]:
+                itema = self._usage_id(ele)
                 if itema != self._usage_id(listb[idx]):
                     return False
         return True

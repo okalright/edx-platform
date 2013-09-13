@@ -632,12 +632,11 @@ class MongoModuleStore(ModuleStoreBase):
         """
         # Save any changes to the xmodule to the MongoKeyValueStore
         xmodule.save()
-        # split mongo's persist_dag is more general and useful.
         self.collection.save({
                 '_id': xmodule.location.dict(),
                 'metadata': own_metadata(xmodule),
                 'definition': {
-                    'data': xmodule.xblock_kvs._data,
+                    'data': xmodule.get_explicitly_set_fields_by_scope(Scope.content),
                     'children': xmodule.children if xmodule.has_children else []
                 }
             })

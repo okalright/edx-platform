@@ -58,7 +58,7 @@ class CachingDescriptorSystem(MakoDescriptorSystem):
             self.modulestore.cache_items(self, [usage_id], lazy=self.lazy)
             json_data = self.module_data.get(usage_id)
             if json_data is None:
-                raise ItemNotFoundError
+                raise ItemNotFoundError(usage_id)
 
         class_ = XModuleDescriptor.load_class(
             json_data.get('category'),
