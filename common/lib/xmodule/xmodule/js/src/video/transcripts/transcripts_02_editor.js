@@ -108,6 +108,7 @@ console.log('[Editor::syncAdvancedTab: groupBy]');
 
             if (_.isString(subsValue)) {
                 subs.setValue(subsValue);
+                utils.deleteFromStorage('sub');
             }
 
             utils.syncCollections(this.collection, metadataCollection);
