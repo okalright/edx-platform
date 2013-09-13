@@ -1,9 +1,25 @@
 <%! from django.utils.translation import ugettext as _ %>
-<%namespace name='static' file='static_content.html'/>
+<script language="JScript">
+<!--
+// returns true if MathPlayer is installed and can be instantiated
+function isMPInstalled()
+{
+//alert(navigator.appVersion);
+//alert(navigator.appVersion.indexOf("MathPlayer");
 
+	try {
+		var oMP = new ActiveXObject("MathPlayer.Factory.1");
 
-% if not False:
+		return true;
+	}
+	catch(e) {
+		return false;
+	}
+}
+</script>
+
+script
+
 <div class="accessible-mathjax ui-helper-hidden-accessible">
 	This page features MathJax technology to render mathematical formulae. Please visit the <a href="http://www.dessci.com/en/products/mathplayer/download.htm">MathPlayer Download Page</a> to download the plugin for your browser. Note: this plugin is only available for Internet Explorer 6 through 9.
 </div>
-% endif
