@@ -33,13 +33,13 @@
         },
 
         render: function () {
+            CMS.Views.Metadata.AbstractEditor.prototype.render
+                .apply(this, arguments);
+                
             var self = this,
                 utils = Transcripts.Utils,
                 component_id =  this.$el.closest('.component').data('id'),
                 videoList = this.getVideoObjectsList();
-
-            CMS.Views.Metadata.AbstractEditor.prototype.render
-                .apply(this, arguments);
 
             utils.command('check', component_id, videoList)
                 .done(function (resp) {
@@ -159,10 +159,14 @@
 
             if (this.checkValidity(data, isNotEmpty)) {
                 var fieldsValue = this.getValueFromEditor(),
-                    modelValue = this.model.getValue().filter(_.identity);
+                    modelValue = this.model.getValue();
 
-                // When some correct value (change model) was adjusted, 
-                // than changed to incorrect (no changes to model), than 
+                if (modelValue) {
+                    modelValue = modelValue.filter(_.identity);
+                }
+
+                // When some correct value (change model) is adjusted, 
+                // than change to incorrect (no changes to model), than 
                 // back previous one correct value (that value is already 
                 // in model). In this case Backbone doesn't trigger 'change'
                 // event on model. That's why render method will not be invoked
