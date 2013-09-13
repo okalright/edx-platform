@@ -46,10 +46,6 @@
                     var params = resp.status;
 
                     self.messenger.render(resp.command, params);
-                })
-                .fail(function (resp) {
-                    // self.messenger.render('not_found');
-                    // noop
                 });
         },
 

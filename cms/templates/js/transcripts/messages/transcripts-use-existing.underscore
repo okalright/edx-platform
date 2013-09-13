@@ -18,7 +18,6 @@
         class="action setting-use-existing"
         type="button"
         name="setting-use-existing"
-        data-video-id="<%= html5_list[0] %>"
         value="<%= gettext("Use Existing Timed Transcripts") %>"
         data-tooltip="<%= gettext("Use Existing Timed Transcripts") %>"
     >
