@@ -484,7 +484,7 @@ class @PeerGradingProblem
       @flag_student_container.show()
       @answer_unknown_container.show()
       @feedback_area.val("")
-
+      @feedback_area.attr('disabled', false)
       @flag_student_checkbox.removeAttr("checked")
       @submit_button.show()
       @submit_button.unbind('click')

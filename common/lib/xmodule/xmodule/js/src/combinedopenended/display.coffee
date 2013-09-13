@@ -294,7 +294,7 @@ class @CombinedOpenEnded
       @answer_area.attr("disabled", false)
       @submit_button.prop('value', 'Submit')
       @submit_button.click ->
-        if confirm "Please confirm you wish to submit your work. (You will not be able to make changes)"
+        if confirm "Please confirm that you wish to submit your work. You will not be able to make any changes after submitting."
           @save_answer
       @setup_file_upload()
     else if @child_state == 'assessing'
@@ -309,7 +309,7 @@ class @CombinedOpenEnded
         @queueing()
         @grader_status = @$(@grader_status_sel)
         @peer_grading_url = @grader_status.attr('data-peer-grading')
-        @grader_status.html("<span class='grading'>Your response has been submitted.  Please <a href='#{@peer_grading_url}'>give your peers some feedback</a> and check back later for your grade.</span>")
+        @grader_status.html("<span class='grading'>Your response has been submitted.  Please give your peers some feedback and check back later for your grade.</span>")
       else if @child_type == "selfassessment"
         @setup_score_selection()
     else if @child_state == 'post_assessment'

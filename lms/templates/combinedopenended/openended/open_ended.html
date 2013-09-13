@@ -12,7 +12,7 @@
   <textarea rows="${rows}" cols="${cols}" name="answer" class="answer short-form-response" id="input_${id}">${previous_answer|h}</textarea>
 
   <div class="message-wrapper"></div>
-  <div class="grader-status" data-peer-grading="${data_peer_grading}">
+  <div class="grader-status">
     % if state == 'initial':
       <span class="unanswered" style="display:inline-block;" id="status_${id}">${_("Unanswered")}</span>
     % elif state == 'assessing':
