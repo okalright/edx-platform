@@ -1,6 +1,5 @@
 (function (window, undefined) {
     Transcripts.Utils = (function () {
-console.log('[Utils]');
         var Storage = {};
 
         var _addToStorage = function (id, data) {
@@ -20,7 +19,6 @@ console.log('[Utils]');
         };
 
         var _getField = function (collection, field_name) {
-console.log('[Utils::_getField]');
             var model;
 
             if (collection && field_name) {
@@ -41,11 +39,9 @@ console.log('[Utils::_getField]');
         // http://www.youtube.com/watch?v=0zM3nApSvMg
         // http://youtu.be/0zM3nApSvMg
         var _youtubeParser = (function () {
-console.log('[Utils::_youtubeParser]');
             var cache = {};
 
             return function (url) {
-console.log('[Utils::_youtubeParser: return]');
                 if (typeof url !== 'string') {
                     console.log('Transcripts.Utils.parseYoutubeLink');
                     console.log('TypeError: Wrong argument type.');
@@ -66,12 +62,9 @@ console.log('[Utils::_youtubeParser: return]');
         }());
 
         var _videoLinkParser = (function () {
-console.log('[Utils::_videoLinkParser]');
             var cache = {};
 
             return function (url) {
-console.log('[Utils::_videoLinkParser: return]');
-
                 if (typeof url !== 'string') {
                     console.log('Transcripts.Utils.parseHTML5Link');
                     console.log('TypeError: Wrong argument type.');
@@ -104,7 +97,6 @@ console.log('[Utils::_videoLinkParser: return]');
         }());
 
         var _linkParser = function (url) {
-console.log('[Utils::_linkParser]');
             var result;
 
             if (typeof url !== 'string') {
@@ -132,14 +124,11 @@ console.log('[Utils::_linkParser]');
         };
 
         var _getYoutubeLink = function (video_id) {
-console.log('[Utils::_getYoutubeLink]');
             return 'http://youtu.be/' + video_id;
         };
 
         var _syncCollections = function (fromCollection, toCollection) {
-console.log('[Utils::_syncCollections]');
             fromCollection.each(function (m) {
-console.log('[Utils::_syncCollections: each]');
                 var model = toCollection.findWhere({
                         field_name: m.getFieldName()
                     });
@@ -164,7 +153,6 @@ console.log('[Utils::_syncCollections: each]');
         //     callbacks to AJAX request events (for example on 'done', 'fail',
         //     etc.).
         var _command = (function () {
-console.log('[Utils::_command]');
             // We will store the XMLHttpRequest object that $.ajax() function
             // returns, to abort an ongoing AJAX request (if necessary) upon
             // subsequent invocations of _command() function.
@@ -174,7 +162,6 @@ console.log('[Utils::_command]');
             var xhr = null;
 
             return function (action, component_id, videoList, extraParams) {
-console.log('[Utils::_command: return]');
                 var params, data;
 
                 console.log('[_command]: arguments = ', arguments);

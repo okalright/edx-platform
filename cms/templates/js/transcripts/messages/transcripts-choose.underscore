@@ -16,19 +16,20 @@
 
 <div class="wrapper-transcripts-buttons">
     <% _.each(html5_list, function(value, index) {
-        console.log('!!!! value = ' + value);
-        console.log('     grouped_list[' + value + '] = ', grouped_list[value]);
+        var type = grouped_list[value][0].type,
+            file_name = value + ((type) ? ('.' + type) : ''),
+            message = gettext("Timed Transcripts from ") + file_name;
     %>
         <button
             class="action setting-choose"
             type="button"
             name="setting-choose"
-            data-video-id="<%= value %>"
-            value="<%= gettext("Timed Transcripts from ") %><%= value %>"
-            data-tooltip="<%= gettext("Timed Transcripts from ") %><%= value %>"
+            data-video-id="<%= val %>"
+            value="<%= message %>"
+            data-tooltip="<%= message %>"
         >
             <span>
-                <%= gettext("Timed Transcripts from ") %><%= value %>.<%= grouped_list[value][0].type %>
+                <%= message %>
             </span>
         </button>
     <% }) %>

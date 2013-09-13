@@ -10,7 +10,6 @@
 
         uploadTpl: '#transcripts-file-upload',
         initialize: function () {
-console.log('FileUploader::initialize');
             _.bindAll(this);
 
             this.file = false;
@@ -18,7 +17,6 @@ console.log('FileUploader::initialize');
         },
 
         render: function () {
-console.log('FileUploader::render');
             var tpl = $(this.uploadTpl).text(),
                 tplContainer = this.$el.find('.transcripts-file-uploader');
 
@@ -41,7 +39,6 @@ console.log('FileUploader::render');
         },
 
         upload: function () {
-console.log('FileUploader::upload');
             if (!this.file) {
                 return;
             }
@@ -54,7 +51,6 @@ console.log('FileUploader::upload');
         },
 
         clickHandler: function (event) {
-console.log('FileUploader::clickHandler');
             event.preventDefault();
 
             this.$input
@@ -63,14 +59,12 @@ console.log('FileUploader::clickHandler');
         },
 
         uploadHadler: function (event) {
-console.log('FileUploader::uploadHadler');
             event.preventDefault();
 
             this.upload();
         },
 
         changeHadler: function (event) {
-console.log('FileUploader::changeHadler');
             event.preventDefault();
 
             this.options.messenger.hideError();
@@ -85,7 +79,6 @@ console.log('FileUploader::changeHadler');
         },
 
         checkExtValidity: function (file) {
-console.log('FileUploader::checkExtValidity');
             var fileExtension = file.name
                                     .split('.')
                                     .pop()
@@ -99,7 +92,6 @@ console.log('FileUploader::checkExtValidity');
         },
 
         xhrResetProgressBar: function () {
-console.log('FileUploader::xhrResetProgressBar');
             var percentVal = '0%';
 
             this.$progress
@@ -109,7 +101,6 @@ console.log('FileUploader::xhrResetProgressBar');
         },
 
         xhrProgressHandler: function (event, position, total, percentComplete) {
-console.log('FileUploader::xhrProgressHandler');
             var percentVal = percentComplete + '%';
 
             this.$progress
@@ -118,20 +109,18 @@ console.log('FileUploader::xhrProgressHandler');
         },
 
         xhrCompleteHandler: function (xhr) {
-console.log('FileUploader::xhrCompleteHandler');
             var utils = Transcripts.Utils,
                 resp = JSON.parse(xhr.responseText),
-                err = (resp.error) ? resp.error : 'Uploading failed.',
-                videoId = resp.subs;
+                err = (resp.error) ? resp.error : 'Error: Uploading failed.',
+                sub = resp.subs;
 
             this.$progress
                 .addClass(this.invisibleClass);
 
             if (xhr.status === 200 && resp.status === "Success") {
                 this.options.messenger.render('uploaded');
-                utils.addToStorage('sub', videoId);
+                utils.addToStorage('sub', sub);
             } else {
-                // TODO Retrieve error form server
                 this.options.messenger.showError(err);
             }
         }

@@ -5,7 +5,6 @@
 
         // TODO: JS test.
         initialize: function () {
-console.log('[Editor::initialize]');
             var metadata = this.$el.data('metadata'),
                 models = this.toModels(metadata);
 
@@ -21,7 +20,6 @@ console.log('[Editor::initialize]');
         //
         // TODO: JS test.
         toModels: function (data) {
-console.log('[Editor::toModels]');
             var metadata = (_.isString(data)) ? JSON.parse(data) : data,
                 models = [];
 
@@ -35,7 +33,6 @@ console.log('[Editor::toModels]');
         },
 
         syncBasicTab: function (metadataCollection) {
-console.log('[Editor::syncBasicTab]');
             var result = [],
                 utils = Transcripts.Utils,
                 getField = utils.getField,
@@ -67,7 +64,6 @@ console.log('[Editor::syncBasicTab]');
         },
 
         syncAdvancedTab: function (metadataCollection) {
-console.log('[Editor::syncAdvancedTab]');
             var utils = Transcripts.Utils,
                 getField = utils.getField,
                 subsValue = utils.getFromStorage('sub'),
@@ -86,7 +82,6 @@ console.log('[Editor::syncAdvancedTab]');
             result = _.groupBy(
                 videoUrlValue,
                 function (value) {
-console.log('[Editor::syncAdvancedTab: groupBy]');
                     return utils.parseLink(value).mode;
                 }
             );

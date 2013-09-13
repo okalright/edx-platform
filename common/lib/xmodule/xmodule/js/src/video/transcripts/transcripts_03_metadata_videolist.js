@@ -15,7 +15,6 @@
         },
 
         initialize: function () {
-console.log('[VideoList::initialize]');
             CMS.Views.Metadata.AbstractEditor.prototype.initialize
                 .apply(this, arguments);
 
@@ -34,7 +33,6 @@ console.log('[VideoList::initialize]');
         },
 
         render: function () {
-console.log('[VideoList::render]');
             var self = this,
                 utils = Transcripts.Utils,
                 component_id =  this.$el.closest('.component').data('id'),
@@ -45,30 +43,26 @@ console.log('[VideoList::render]');
 
             utils.command('check', component_id, videoList)
                 .done(function (resp) {
-console.log('[VideoList::render: done]');
                     var params = resp.status;
 
                     self.messenger.render(resp.command, params);
                 })
                 .fail(function (resp) {
-console.log('[VideoList::render: fail]');
-                    self.messenger.render('not_found');
+                    // self.messenger.render('not_found');
+                    // noop
                 });
         },
 
         getValueFromEditor: function () {
-console.log('[VideoList::getValueFromEditor]');
             return _.map(
                 this.$el.find('.input'),
                 function (ele) {
-console.log('[VideoList::getValueFromEditor: map]');
                     return ele.value.trim();
                 }
             ).filter(_.identity);
         },
 
         getVideoObjectsList: function () {
-console.log('[VideoList::getVideoObjectsList]');
             var parseLink = Transcripts.Utils.parseLink,
                 values = this.getValueFromEditor(),
                 arr = [],
@@ -86,7 +80,6 @@ console.log('[VideoList::getVideoObjectsList]');
         },
 
         setValueInEditor: function (value) {
-console.log('[VideoList::setValueInEditor]');
             var parseLink = Transcripts.Utils.parseLink,
                 list = this.$el.find('.input'),
                 val = value.filter(_.identity),
@@ -106,7 +99,6 @@ console.log('[VideoList::setValueInEditor]');
         },
 
         getPlaceholders: function (value) {
-console.log('[VideoList::getPlaceholders]');
             var parseLink = Transcripts.Utils.parseLink,
                 placeholders = _.clone(this.placeholders),
                 result = [],
@@ -130,7 +122,6 @@ console.log('[VideoList::getPlaceholders]');
         },
 
         openAdditional: function (event) {
-console.log('[VideoList::openAdditional]');
             if (event && event.preventDefault) {
                 event.preventDefault();
             }
@@ -139,7 +130,6 @@ console.log('[VideoList::openAdditional]');
         },
 
         closeAdditional: function (event) {
-console.log('[VideoList::closeAdditional]');
             if (event && event.preventDefault) {
                 event.preventDefault();
             }
@@ -148,7 +138,6 @@ console.log('[VideoList::closeAdditional]');
         },
 
         toggleAdditional: function (event) {
-console.log('[VideoList::toggleAdditional]');
             if (event && event.preventDefault) {
                 event.preventDefault();
             }
@@ -161,7 +150,6 @@ console.log('[VideoList::toggleAdditional]');
         },
 
         inputHandler: function (event) {
-console.log('[VideoList::inputHandler]');
             if (event && event.preventDefault) {
                 event.preventDefault();
             }
@@ -179,7 +167,6 @@ console.log('[VideoList::inputHandler]');
         },
 
         isUniqVideoTypes: function (videoList) {
-console.log('[VideoList::isUniqVideoTypes]');
             var arr = _.pluck(videoList, 'type'),
                 uniqArr = _.uniq(arr);
 
@@ -187,7 +174,6 @@ console.log('[VideoList::isUniqVideoTypes]');
         },
 
         checkValidity: function (data, showErrorModeMessage) {
-console.log('[VideoList::checkValidity]');
             var self = this,
                 utils = Transcripts.Utils,
                 videoList = this.getVideoObjectsList();

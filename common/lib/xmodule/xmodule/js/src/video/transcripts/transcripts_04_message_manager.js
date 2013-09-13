@@ -64,7 +64,6 @@
         },
 
         showError: function (err, hideButtons) {
-console.log('[MessageManager::showError]');
             var $error = this.$el.find('.transcripts-error-message');
 
             if (err) {
@@ -83,7 +82,6 @@ console.log('[MessageManager::showError]');
         },
 
         hideError: function () {
-console.log('[MessageManager::hideError]');
             this.$el.find('.transcripts-error-message')
                 .addClass(this.invisibleClass);
 
@@ -92,71 +90,54 @@ console.log('[MessageManager::hideError]');
         },
 
         importHandler: function (event) {
-console.log('[MessageManager::importHandler]');
             event.preventDefault();
 
-            this.importTranscripts();
-        },
-
-        importTranscripts: function () {
-console.log('[MessageManager::importTranscripts]');
-            var self = this,
-                utils = Transcripts.Utils,
-                component_id = this.options.component_id,
-                parent = this.options.parent,
-                videoList = parent.getVideoObjectsList();
-            
-            utils.command('replace', component_id, videoList)
-                .done(function (resp) {
-console.log('[MessageManager::importTranscripts: done]');
-                    var utils = Transcripts.Utils,
-                        videoId = resp.status.subs;
-
-                    self.render('found');
-                    utils.addToStorage('subs', videoId);
-                })
-                .fail(function (resp) {
-console.log('[MessageManager::importTranscripts: fail]');
-                    self.showError('Error: Import failed.');
-                });
+            this.processCommand('replace', 'Error: Import failed.');
         },
 
         replaceHandler: function (event) {
-console.log('[MessageManager::replaceHandler]');
             event.preventDefault();
 
-            this.replaceTranscripts();
-        },
-
-        replaceTranscripts: function () {
-console.log('[MessageManager::replaceTranscripts]');
-            var self = this,
-                utils = Transcripts.Utils,
-                component_id = this.options.component_id,
-                videoList = this.options.parent.getVideoObjectsList();
-
-            utils.command('replace', component_id, videoList)
-                .done(function (resp) {
-console.log('[MessageManager::replaceTranscripts: done]');
-                    // TODO: update subs field
-
-                    self.render('replaced');
-                })
-                .fail(function (resp) {
-console.log('[MessageManager::replaceTranscripts: fail]');
-                    self.showError('Error: Replacing failed.');
-                });
+            this.processCommand('replace', 'Error: Replacing failed.');
         },
 
         useExistingHandler: function (event) {
-console.log('[MessageManager::useExistingHandler]');
             event.preventDefault();
 
-            this.useExistingTranscripts();
+            var videoId = $(event.currentTarget).data('video-id');
+
+            this.processCommand('choose', 'Error: Can\'t use existing.', videoId);
         },
 
-        useExistingTranscripts: function () {
-            // TODO
+        chooseHandler: function (event) {
+            event.preventDefault();
+
+            var videoId = $(event.currentTarget).data('video-id');
+
+            this.processCommand('choose', 'Error: Choosing failed.', videoId);
+        },
+
+        processCommand: function (action, errorMessage, videoId) {
+            var self = this,
+                utils = Transcripts.Utils,
+                component_id = this.options.component_id,
+                videoList = this.options.parent.getVideoObjectsList(),
+                extraParam;
+
+            if (videoId) {
+                extraParam = { html5_id: videoId };
+            }
+
+            utils.command(action, component_id, videoList, extraParam)
+                .done(function (resp) {
+                    var sub = resp.status.subs;
+
+                    self.render('found');
+                    utils.addToStorage('sub', sub);
+                })
+                .fail(function (resp) {
+                    self.showError(errorMessage);
+                });
         }
 
     });
