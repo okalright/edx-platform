@@ -155,7 +155,9 @@ class @CombinedOpenEnded
     @is_ctrl = false
     #Setup reset
     @reset_button = @$(@reset_button_sel)
-    @reset_button.click @reset
+    @reset_button.click ->
+      if confirm "Are you sure you want to remove your previous response to this question?"
+        @reset
     #Setup next problem
     @next_problem_button = @$(@next_step_sel)
     @next_problem_button.click @next_problem
