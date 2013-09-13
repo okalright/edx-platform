@@ -101,14 +101,6 @@
             this.processCommand('replace', 'Error: Replacing failed.');
         },
 
-        useExistingHandler: function (event) {
-            event.preventDefault();
-
-            var videoId = $(event.currentTarget).data('video-id');
-
-            this.processCommand('choose', 'Error: Can\'t use existing.', videoId);
-        },
-
         chooseHandler: function (event) {
             event.preventDefault();
 
@@ -138,6 +130,16 @@
                 .fail(function (resp) {
                     self.showError(errorMessage);
                 });
+        },
+
+        useExistingHandler: function (event) {
+            event.preventDefault();
+
+            this.useExistingTranscript();
+        },
+
+        useExistingTranscript: function () {
+            self.render('found');
         }
 
     });
