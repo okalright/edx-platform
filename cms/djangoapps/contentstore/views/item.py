@@ -376,6 +376,7 @@ def check_transcripts(request):
     """
     transcripts_presence = {
         'html5_local': [],
+        'is_youtube_mode': False,
         'youtube_local': False,
         'youtube_server': False,
         'youtube_diff': True,
@@ -399,6 +400,7 @@ def check_transcripts(request):
     # Check for youtube transcripts presence
     youtube_id = videos.get('youtube', None)
     if youtube_id:
+        transcripts_presence['is_youtube_mode'] = True
 
         # youtube local
         filename = 'subs_{0}.srt.sjson'.format(youtube_id)
@@ -462,6 +464,7 @@ def transcripts_logic(transcripts_presence):
     transcripts_presence = {
         'html5_local': [],
         'html5_diff': False,
+        'is_youtube_mode': False,
         'youtube_local': False,
         'youtube_server': False,
         'youtube_diff': False,

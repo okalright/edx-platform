@@ -22,7 +22,6 @@
         },
 
         initialize: function () {
-console.log('[MessageManager::initialize]');
             _.bindAll(this);
 
             this.fileUploader = new Transcripts.FileUploader({
@@ -33,48 +32,35 @@ console.log('[MessageManager::initialize]');
         },
 
         render: function (template_id, params) {
-console.log('[MessageManager::render]');
             var tplHtml = $(this.templates[template_id]).text(),
                 videoList = this.options.parent.getVideoObjectsList(),
                 groupedList = _.groupBy(
                     videoList,
                     function (value) {
-console.log('[MessageManager::render: groupBy]');
                         return value.video;
                     }
                 ),
                 html5List = (params) ? params.html5_local : [],
+                isYoutubeMode = params && params.is_youtube_mode,
                 template;
 
             if (!tplHtml) {
                 console.error('Couldn\'t load Transcripts status template');
             }
-            console.log('a');
-            console.log('tplHtml = ', tplHtml);
+
             template = _.template(tplHtml);
-            console.log('b');
             this.$el
                 .removeClass('is-invisible')
                 .find(this.elClass).html(template({
                     component_id: encodeURIComponent(this.options.component_id),
                     html5_list: html5List,
-                    grouped_list: groupedList
+                    grouped_list: groupedList,
+                    isYoutubeMode: isYoutubeMode
                 }));
-            console.log('c');
 
-            if (params) {
-                if (params.youtube_local || params.youtube_server) {
-                    this.hideUploadButton();
-                } else {
-                    this.fileUploader.render();
-                }
-            }
+            this.fileUploader.render();
 
             return this;
-        },
-
-        hideUploadButton: function () {
-            this.$el.find('.setting-upload').hide();
         },
 
         showError: function (err, hideButtons) {

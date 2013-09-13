@@ -25,7 +25,7 @@
             <%= gettext("Use Existing Timed Transcripts") %>
         </span>
     </button>
-
+    <% if (!isYoutubeMode){ %>
     <button
         class="action setting-upload"
         type="button"
@@ -37,4 +37,5 @@
             <%= gettext("Upload New Timed Transcripts") %>
         </span>
     </button>
+    <% } %>
 </div>

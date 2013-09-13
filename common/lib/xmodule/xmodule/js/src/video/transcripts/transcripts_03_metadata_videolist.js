@@ -171,8 +171,6 @@ console.log('[VideoList::inputHandler]');
                 isNotEmpty = Boolean(entry),
                 $el = $(event.currentTarget);
 
-            this.messenger.hideError();
-
             if (this.checkValidity(data, isNotEmpty)) {
                 this.updateModel();
             } else if ($el.hasClass('videolist-url')) {
@@ -208,6 +206,8 @@ console.log('[VideoList::checkValidity]');
                 return false;
             }
 
+            this.messenger.hideError();
+            console.log(data)
             return true;
         }
     });
