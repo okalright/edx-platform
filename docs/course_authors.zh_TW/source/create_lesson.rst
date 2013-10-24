@@ -1,15 +1,14 @@
 
 **************************
-Create a Lesson in Studio
+在Studio中創建一個Lesson
 **************************
 
-Once you have created a course, you are ready to create content for that course.
+一旦您已經創建一個課程，而您準備去創建那個課程的內容。
 
 .. warning::
 
-	The alpha version of Studio does not have versioning or automatic
-	updating of your browser between refreshes. Versioning is planned for future
-	refresheseleases, but, in the meantime, only one author should edit a unit, in one
+	這個Studio的alpha版本沒有版本控制或自動更新您的瀏覽器between refreshes. 
+	Versioning is planned for future refresheseleases, 但是， in the meantime, only one author should edit a unit, in one
 	browser, on only one tab.  If a unit is open for editing in multiple browser
 	sessions, the session that saves last will overwrite any previously saved
 	content without displaying a warning. Also, older browser sessions can overwrite
