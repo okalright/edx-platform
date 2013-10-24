@@ -1,25 +1,24 @@
 
 *************
-Create a Unit
+創建一個Unit
 *************
 
-   1. On the **Course Outline** page, click to open the subsection where you want to create the unit.
+   1. 在**Course Outline**上，點擊打開subsection，這是您想要創建之單元的地方。
 
-   2. Click **New Unit.** The following screen appears.
+   2. 點擊**New Unit.**如下的畫面會顯示。
 
     .. image:: Images/image051.png
        :width: 800
 
 
-   3. In the **Display Name** box, type the name of the unit. This name appears in the course ribbon at
-      the top of the screen on Edge.
+   3. 在**Display Name** 欄位中，填入unit名稱。在Edge上畫面上方這個名稱會顯示在course ribbon中。
 
-      Each unit has one or more components. 
+      每個unit有一個或多個components。
 
-     -To create a discussion space where you or your students can   post    questions or participate in a discussion, click **Discussion.**
+     -創建一個討論空間，您或您的學生就可以發佈問題或者參與討論，點擊**Discussion.**
 
-     -To create a component where you can add text, images, or other content, click **html.**
+     -創建一個component，您就可以增加文字、圖片，或者其他內容，點擊**html.**
 
-     -To create a problem for your students to solve, click **Problem.**
+     -創建一個問題給您的學生解決，點擊**Problem.**
 
-     -To add a video, click **Video.**
+     -新增一個影片，點擊**Video.**

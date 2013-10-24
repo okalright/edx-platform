@@ -1,60 +1,57 @@
 
 **************
-Create a Video
+創建一個影片
 **************
 
-Many instructors use videos to take the place of in-class lectures. You can create a video of your lecture, and interweave other components—such as discussions and problems—to promote active learning.
+許多教師使用影片舉行一個in-class的演講。您可以創建一個您的演講影片，並且interweave其他的components-像是討論串及問題-來促進積極的學習。
 
-To add a video to the unit, you must upload your video to YouTube, and then create a video component. You can also add a transcript to your video.
+增加一個影片給unit，您必須上傳您的影片到YouTube上，以及創建一個影片component。您也可以增加一個transcript給您的影片。
 
-You can include videos that run at 0.75 speed, 1.25 speed, and 1.50 speed as well as at normal speed. To do this, you must upload each of these videos to YouTube separately.
+您可以include影片，以0.75倍、1.25倍、1.5倍速度播放。為了做到這點，您必須separately上傳每一個這些影片到YouTube上。
 
 .. note::
 
-  YouTube only hosts videos of up to 15 minutes. If you encode a 0.75 speed option, you must make
-  sure that source video segments are only 11.25 minutes long so that YouTube can host all speeds.
-  YouTube offers paid accounts that relax this restriction.
+  YouTube只hosts影片of up to 15分鐘。
+  如果您改為一個0.75倍速度的選項，您必須確定來源的影片片段是只有11.25分鐘長，如此一來YouTube可以host全部速度。
+  YouTube提供一個付費帳號可以解除這個限制。
+  
 
-
-1. Upload the video that you want to YouTube. Make note of the code that appears between **watch?v**
-= and **&feature** in the URL. This code appears in the green box below.
+1. 上傳您想要的的影片在YouTube上。註記編碼顯示在**watch?v**之間。
+= and **&feature** in the URL. 這個編碼顯示在綠色的box之下。
 
 .. image:: Images/image053.png
   :width: 800 px
 
-2. In Studio, go to the unit that you want.
+2. 在Studio中，進入您想要的單元。
 
-3. Under **Add New Component,** click **Video.**
+3. 在**Add New Component,**之下，點擊**Video.**
 
-4. In the screen that appears, click **default.**
+4. 在畫面會顯示，點擊**default.**
 
-5. When the new video component appears, click **edit**.** A video component opens, and a sample video
-begins playing automatically.
+5. 當新的影片component顯是，點擊**edit**.**一個影片component開啟，以及一個範例影片開始自動撥放。
 
-6. In the **display_name** box, type the text that you want the student to see when the student hovers
-the mouse over the icon in the bar at the top of the page. This text also appears as a headerfor the video.
+6. 在**display_name**欄位中，填入您想要學生在hovers the mouse over the icon in the bar頁面上方看到的文字。
+這個文字也顯示成一個影片的headerfor。
 
-7. Change the codes in the green boxes to the YouTube codes that you noted in step 1. The first
-code (immediately to the right of "0.75:") corresponds to the video at 0.75 speed, the next
-corresponds to 1.0 speed, etc.
+7. 改變YouTube編碼在綠色boxes中的，您就可以註記步驟1。
+第一個編碼(immediately to the right of "0.75:")corresponds 給影片以0.75倍速度，下一個corresponds以1.0倍速度，etc。
 
 .. image:: Images/image055.png
   :width: 800
 
-8. Click **Save.**
+8. 點擊 **Save.**
 
 .. note::
-
-  All videos embedded using the edX player begin playing automatically. 
-  There is currently no way to turn off the autoplay feature.
+    
+  所有嵌入影片使用edX播放器開始自動撥放。
+  目前沒有關掉自動撥放的功能。
   
 
-**To add a transcript for your video:**
+**新增一個副本給您的影片：**
 
-1. Save your srt.sjson file as **subs_YOUTUBEID.srt.sjson,** where **YOUTUBEID** is the YouTube ID of your video.
+1. 儲存您的srt.sjson檔案為**subs_YOUTUBEID.srt.sjson,** where **YOUTUBEID**是您影片的YouTube ID。
 
-2. Upload the **subs_YOUTUBEID.srt.sjson** file to the **Files & Uploads** page.
+2. 上傳**subs_YOUTUBEID.srt.sjson**檔案到**Files & Uploads**頁面。
 
-3. Create a link to this file by following the steps in the Add Items to the Handouts Sidebar
-section.
+3. 根據下面新增項目給Handouts Sidebar section的步驟來創建一個連結給這個檔案。
 
